@@ -4,6 +4,9 @@ out vec4 FragColor;
 in float depth;
 in vec4 pos;
 in vec4 world;
+in vec4 glPos;
+
+
 void main()
 {        
 	//if (setup==true){
@@ -11,15 +14,11 @@ void main()
 	//}
 	//else{
     //if (FragColor.y != -0.5)
-	//if (isSecond){
-		//if (texture(shadowMapNear, pos.xy).x  <= gl_FragCoord.z+0.001)
-		
-		//	FragColor = vec4(gl_FragCoord.z+1.0,world.xy,world.z+1.0);
-		
-		//else		FragColor = texture(shadowMapNear, pos.xy);
-		//else FragColor = vec4(gl_FragCoord.z,world.xy,world.z+1.0);
+	
+	//else 
+	FragColor = vec4(gl_FragCoord.z,glPos.z,world.x,world.y+1.0);
 		//FragColor = vec4(texture(shadowMapNear, pos.xy).xyz,1.0);
-	FragColor = vec4(gl_FragCoord.z,world.xz,world.y+1.0);
+	//FragColor = vec4(gl_FragCoord.z,world.xz,world.y+1.0);
 	//FragColor = vec4(world.xyz,1.0);
 	
 	

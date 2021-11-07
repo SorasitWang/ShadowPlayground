@@ -38,9 +38,6 @@
     <None Include="src\shader\lightcube.vs">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="src\shader\ourshader.fs">
-      <Filter>Header Files</Filter>
-    </None>
     <None Include="src\shader\ourShader.vs">
       <Filter>Header Files</Filter>
     </None>
@@ -54,6 +51,9 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\shader\texture.vs">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\shader\ourshader.fs">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>
