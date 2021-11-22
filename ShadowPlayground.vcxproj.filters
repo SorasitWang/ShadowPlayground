@@ -16,6 +16,9 @@
     <Filter Include="Header Files\plane">
       <UniqueIdentifier>{1bb34b49-7859-4a2f-ad7b-1be269e6ed09}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Sphere">
+      <UniqueIdentifier>{97f58abe-c709-435b-898e-a9e7a770942e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -23,6 +26,9 @@
     </ClCompile>
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sphere\Sphere.cpp">
+      <Filter>Header Files\Sphere</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,6 +62,12 @@
     <None Include="src\shader\ourshader.fs">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="..\Particle\header\Ball\ball.vs">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="..\Particle\header\Ball\ball.fs">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\plane\Plane.h">
@@ -75,6 +87,12 @@
     </ClInclude>
     <ClInclude Include="src\header\stb_image.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ball.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sphere\Sphere.h">
+      <Filter>Header Files\Sphere</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

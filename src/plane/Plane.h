@@ -7,7 +7,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "./Header/shader_m.h"
-
+#include <time.h>
 class Plane {
 
 public:
@@ -24,9 +24,10 @@ public:
 
 
     void init(Shader shader, float yy) {
-        y = yy;
-        /*float interval = size / sub;
-        for (int i = 0; i < sub - 1; i++) {
+        srand(time(0));
+        y = yy;// (rand() / RAND_MAX) * 3 * yy;
+        float interval = size / sub;
+       /* for (int i = 0; i < sub - 1; i++) {
             for (int j = 0; j < sub-1; j++) {
                 //left tri
                 //0
@@ -80,11 +81,11 @@ public:
                 vertices.push_back(0); vertices.push_back(1); vertices.push_back(0);                
             }
         }
-        */
-        /*for (int i = 0; i < vertices.size(); i += 3) {
+        /*
+        for (int i = 0; i < vertices.size(); i += 3) {
             std::cout << vertices[i] << " " << vertices[i + 1] << " " << vertices[i + 2] << std::endl;
         }*/
-               
+        
         vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
         vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
         vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
@@ -92,7 +93,7 @@ public:
         vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
         vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
 
-
+        
         glGenVertexArrays(1, &pVAO);
         glGenBuffers(1, &pVBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -137,6 +138,10 @@ public:
         glBindVertexArray(0);
     
     }
+
+    std::vector<float> getVertices() {
+        return vertices;
+     }
 
     void draw(Shader shader,glm::mat4 proj,glm::mat4 view,glm::vec3 lightPos,Camera cam) {
 
@@ -186,14 +191,14 @@ public:
 
         shader.setFloat("alpha", 1.0f);
         glBindVertexArray(pVAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_TRIANGLES, 0, 6/*pow(sub,2)*12*/);
+        glDrawArrays(GL_TRIANGLES, 0,6/* pow(sub,2)*12*/);
         shader.use();
         shader.setVec3("material.diffuse",glm::vec3(0.0f));
         shader.setVec3("material.ambient", glm::vec3(0.0f));
         shader.setFloat("alpha", 0.5f);
         glLineWidth(2.0f);
         glBindVertexArray(pVAO);
-        glDrawArrays(GL_LINE_STRIP, 0, pow(sub, 2) * 12);
+       // glDrawArrays(GL_LINE_STRIP, 0, pow(sub, 2) * 12);
     }
     void moveOne(float yOffset, float vertex) {
         if (vertex < 0) return;

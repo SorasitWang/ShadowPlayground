@@ -13,6 +13,12 @@ struct Properties {
     float quadratic;
 }; 
 
+struct Obj { 
+    int num;
+    vec3 vertex[1000];
+    mat4 modelViewProj;
+
+}; 
 
 in VS_OUT {
     vec3 FragPos;
@@ -32,8 +38,20 @@ uniform sampler2D posMapNear;
 uniform float far_plane;
 uniform float alpha;
 uniform bool drawShadow;
+
+uniform int numObj;
+uniform Obj allObj[10];
 //float PointShadowCalculation(vec3 fragPos);
 
+
+
+int CalculatProbSameTexture(vec4 far,vec4 near)
+{
+    for (int i=0 ;i<numObj;i++){
+
+    }
+    return 0;
+}
 
 float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D mapShadowNear,float bias,vec3 lightP)
 {
@@ -44,6 +62,8 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     vec4 mapFar = texture(shadowMapFar, projCoords.xy);
     vec4 mapNear = texture(shadowMapNear, projCoords.xy);
+    vec4 posFar = texture(posMapFar, projCoords.xy);
+    vec4 posNear = texture(posMapNear, projCoords.xy);
 
     float closestDepth = (1.0*mapFar.r + 1.0*mapNear.r)/2.0;//distance(texture(mapShadow, projCoords.xy).xyz,lightP); 1
    
@@ -58,7 +78,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     // check whether current frag pos is in shadow
     bias = 0.00;
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-    //return shadow;
+    CalculatProbSameTexture(posFar,posNear);
     // PCF
     return shadow;
     shadow = 0.0;
@@ -74,7 +94,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     shadow /= 9.0;
     
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
-    if(projCoords.z > 3.0)
+    if(projCoords.z > 10.0)
         shadow = 0.0;
         
     return shadow;

@@ -10,7 +10,8 @@
 #include "./header/camera.h"
 #include <iostream>
 #include "./plane/Plane.h"
-
+#include "../Ball.h"
+#include "./sphere/Sphere.h"
 //#include "../Character.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -30,7 +31,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 const float SIZE = 6;
-
+const int numObj = 3;
 glm::vec3 lightPos(1.0f, 0.6f, 1.0f);
 glm::vec3 lightPos2(1.0f, 0.6f, 0.0f);
 float lastX = SCR_WIDTH / 2.0f;
@@ -257,6 +258,32 @@ int main()
 
     simpleDepthShader.use();
     simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+
+    planeShader.use();
+    //p1 + p2
+    planeShader.setInt("allPlate[0].num", p1.vertices.size());
+    planeShader.setInt("allPlate[1].num", p1.vertices.size());
+    for (int i = 0; i < p1.vertices.size(); i +=3) {
+        planeShader.setInt("allPlate[0].vertex", p1.vertices[i]);
+        planeShader.setInt("allPlate[0].vertex", p1.vertices[i+1]);
+        planeShader.setInt("allPlate[0].vertex", p1.vertices[i+2]);
+        planeShader.setInt("allPlate[1].vertex", p2.vertices[i]);
+        planeShader.setInt("allPlate[1].vertex", p2.vertices[i+1]);
+        planeShader.setInt("allPlate[1].vertex", p2.vertices[i+2]);
+    }
+    planeShader.setInt("allPlate[2].num", 6*8*6);
+    planeShader.setInt("allPlate[3].num", 6 * 8 * 6);
+    for (int i = 0; i < p1.vertices.size(); i += 1) {
+        planeShader.setInt("allPlate[2].vertex", vertices[i]);
+        planeShader.setInt("allPlate[2].vertex", vertices[i + 1]);
+        planeShader.setInt("allPlate[2].vertex", vertices[i + 2]);
+        planeShader.setInt("allPlate[3].vertex", vertices[i]);
+        planeShader.setInt("allPlate[3].vertex", vertices[i + 1]);
+        planeShader.setInt("allPlate[3].vertex", vertices[i + 2]);
+    }
+
+    
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -316,7 +343,7 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.6, 0.0, 0.43));
+        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -352,7 +379,7 @@ int main()
 
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, posMap2);
-       // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
         ///---------shadow------------------
@@ -383,7 +410,7 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.6, 0.0, 0.43));
+        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -402,10 +429,10 @@ int main()
 
         simpleDepthShader.setMat4("model", model);
         simpleDepthShader.setBool("isSecond", true);
-        simpleDepthShader.setInt("posMapNear", 3);
+        simpleDepthShader.setInt("posMapNear", 1);
 
         glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 48);
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.2, 0.0, 0.43));
@@ -431,6 +458,14 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
+        /*
+        
+        draw
+        
+        
+        */
+
+
         planeShader.use();
 
 
@@ -440,11 +475,18 @@ int main()
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)SCR_HEIGHT / (float)SCR_WIDTH, 0.01f, 100.0f);
         planeShader.use();
         //planeShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        planeShader.setInt("numObj", numObj);
+        //plane
+        
+       
         planeShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
         planeShader.setFloat("far_plane", far_plane);
         planeShader.setBool("drawShadow", false);
+        planeShader.setMat4("allPlate[0].modelViewProj", model* view* proj);
+        planeShader.setMat4("allPlate[1].modelViewProj", model* view* proj);
+
         p1.draw(planeShader, proj, view, lightPos2, cam);
-        //p2.draw(planeShader, proj, view, lightPos, cam);
+        p2.draw(planeShader, proj, view, lightPos, cam);
 
         //Box
         planeShader.use();
@@ -464,15 +506,18 @@ int main()
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        planeShader.setMat4("allPlate[2].modelViewProj", model* view* proj);
+        
         planeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.6, 0.0, 0.43));
+        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        planeShader.setMat4("allPlate[3].modelViewProj", model* view* proj);
         planeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
@@ -502,7 +547,7 @@ int main()
         shader.setInt("texture1", show);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-0.7f, 0.7f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.5));
+        model = glm::scale(model, glm::vec3(0.8));
         shader.setMat4("model", model);
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -600,7 +645,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     x = 2 * xpos / SCR_WIDTH - 1;
     y = 2 * (-ypos / SCR_HEIGHT + 0.5);
 
-    p1.move(yoffset);
+    //p1.move(yoffset);
 
     cam.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -608,7 +653,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    /*if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         std::cout << p1.selected << std::endl;
         if (!p1.selected) {
             glm::mat4 view = cam.GetViewMatrix();// glm::lookAt(glm::vec3(0.0f), cam.Front, cam.Up);
@@ -635,7 +680,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
         p1.selected = false;
-    }
+    }*/
 
 
 
@@ -645,7 +690,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     //std::cout << yoffset << std::endl;
-    p1.adaptAreaHill(yoffset);
+    //p1.adaptAreaHill(yoffset);
     //p.move(yoffset);
     //cam.ProcessMouseScroll(yoffset);
 }
