@@ -12,6 +12,7 @@
 #include "./plane/Plane.h"
 #include "../Ball.h"
 #include "./sphere/Sphere.h"
+#include <string>
 //#include "../Character.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -262,25 +263,18 @@ int main()
 
     planeShader.use();
     //p1 + p2
-    planeShader.setInt("allPlate[0].num", p1.vertices.size());
-    planeShader.setInt("allPlate[1].num", p1.vertices.size());
-    for (int i = 0; i < p1.vertices.size(); i +=3) {
-        planeShader.setInt("allPlate[0].vertex", p1.vertices[i]);
-        planeShader.setInt("allPlate[0].vertex", p1.vertices[i+1]);
-        planeShader.setInt("allPlate[0].vertex", p1.vertices[i+2]);
-        planeShader.setInt("allPlate[1].vertex", p2.vertices[i]);
-        planeShader.setInt("allPlate[1].vertex", p2.vertices[i+1]);
-        planeShader.setInt("allPlate[1].vertex", p2.vertices[i+2]);
+    planeShader.setInt("xxx", 3);
+    planeShader.setInt("allObj[0].num", p1.vertices.size()/6);
+    planeShader.setInt("allObj[1].num", p1.vertices.size()/6);
+    for (int i = 0; i < p1.vertices.size(); i +=6) {
+        planeShader.setVec3(std::string("allObj[0].vertex[")+ std::to_string(i/6) + std::string("]"), glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
+        planeShader.setVec3(std::string("allObj[1].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
     }
-    planeShader.setInt("allPlate[2].num", 6*8*6);
-    planeShader.setInt("allPlate[3].num", 6 * 8 * 6);
-    for (int i = 0; i < p1.vertices.size(); i += 1) {
-        planeShader.setInt("allPlate[2].vertex", vertices[i]);
-        planeShader.setInt("allPlate[2].vertex", vertices[i + 1]);
-        planeShader.setInt("allPlate[2].vertex", vertices[i + 2]);
-        planeShader.setInt("allPlate[3].vertex", vertices[i]);
-        planeShader.setInt("allPlate[3].vertex", vertices[i + 1]);
-        planeShader.setInt("allPlate[3].vertex", vertices[i + 2]);
+    planeShader.setInt("allObj[2].num", 6*8);
+    planeShader.setInt("allObj[3].num", 6 * 8);
+    for (int i = 0; i < 6 * 8 * 6; i += 6) {
+        planeShader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1],vertices[i + 2]));
+        planeShader.setVec3(std::string("allObj[3].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
     }
 
     
@@ -482,8 +476,8 @@ int main()
         planeShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
         planeShader.setFloat("far_plane", far_plane);
         planeShader.setBool("drawShadow", false);
-        planeShader.setMat4("allPlate[0].modelViewProj", model* view* proj);
-        planeShader.setMat4("allPlate[1].modelViewProj", model* view* proj);
+        planeShader.setMat4("allObj[0].model", model);
+        planeShader.setMat4("allObj[1].model", model);
 
         p1.draw(planeShader, proj, view, lightPos2, cam);
         p2.draw(planeShader, proj, view, lightPos, cam);
@@ -506,7 +500,7 @@ int main()
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        planeShader.setMat4("allPlate[2].modelViewProj", model* view* proj);
+        planeShader.setMat4("allObj[2].model", model);
         
         planeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
@@ -517,7 +511,8 @@ int main()
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        planeShader.setMat4("allPlate[3].modelViewProj", model* view* proj);
+        planeShader.setMat4("allObj[3].model", model);
+        planeShader.setMat4("modelObj", glm::mat4(0.0f));
         planeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
