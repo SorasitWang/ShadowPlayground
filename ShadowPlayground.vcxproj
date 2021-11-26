@@ -118,6 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +144,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\header\imgui\imgui.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\header\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\sphere\Sphere.cpp" />
   </ItemGroup>
@@ -163,6 +171,15 @@
   <ItemGroup>
     <ClInclude Include="Ball.h" />
     <ClInclude Include="src\header\camera.h" />
+    <ClInclude Include="src\header\imgui\imconfig.h" />
+    <ClInclude Include="src\header\imgui\imgui.h" />
+    <ClInclude Include="src\header\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="src\header\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="src\header\imgui\imgui_impl_sdl.h" />
+    <ClInclude Include="src\header\imgui\imgui_internal.h" />
+    <ClInclude Include="src\header\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\header\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\header\imgui\imstb_truetype.h" />
     <ClInclude Include="src\header\mesh.h" />
     <ClInclude Include="src\header\model.h" />
     <ClInclude Include="src\header\shader_m.h" />

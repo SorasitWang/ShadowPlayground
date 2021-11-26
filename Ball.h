@@ -34,49 +34,17 @@ const int X_SEGMENTS = 50;
 const GLfloat PI = 3.14159265358979323846f;
 class Ball {
 public:
-	Ball(float g) {
-		this->g = g;
-	};
-	Ball() {
 
-	};
-	std::vector<glm::vec3> allColor = { glm::vec3(0.8f, 0.3f, 0.3f) , glm::vec3(0.3f, 0.8f, 0.3f) , glm::vec3(0.3f, 0.3f, 0.8f),
-										glm::vec3(0.6f, 0.6f, 0.2f) ,glm::vec3(0.6f, 0.2f, 0.6f) ,glm::vec3(0.2f, 0.6f, 0.6f) };
 	unsigned int VAO, VBO, EBO;
-	unsigned int colVAO, colVBO, colEBO;
 	float radius = 0.1;
-	float lifeTime = 500.0f;
-	float curTime = 0;
-	float veloLostWall = 0.95;
-	float veloLostBump = 0.0f;
-	float friction = 0.01;
-	float g = 0.01, gVelo = 0.0f;
-	int countOnGround = 0;
-	int countOnRoof = 0;
-	bool isIn = true;
-	bool move = true;
-	bool col = false;
-	int onSurface = -1; // 0 ground , 1 roof
-	float colFade = 0.5f;
-	std::vector<ColProperty> colMarkers;
-	bool threeD = false;
-	glm::vec3 velocity = glm::vec3(1, 1, 1);
-	glm::vec3 direction = glm::vec3(0.3, 0.5, 0.0f);
-	glm::vec3 color = glm::vec3(0.8f, 0.3f, 0.3f);
-	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+	std::vector<float> sphereVertices;
+	std::vector<int> sphereIndices;
 
 
+	void init(Shader shader) {
+		
 
-	void init(Shader shader, ballProperty prop, bool threeD, std::vector<Ball> balls) {
-		this->threeD = threeD;
-		lifeTime = prop.lifeTime;
-		g = prop.g;
-		veloLostWall = 1 - prop.velocityLostWall;
-		veloLostBump = 1 - prop.velocityLostBump;
-		friction = prop.friction;
-
-		std::vector<float> sphereVertices;
-		std::vector<int> sphereIndices;
+	
 
 		/*2-Calculate the vertices of the sphere*/
 		//Generate the vertices of the ball
@@ -103,6 +71,7 @@ public:
 				sphereIndices.push_back(i * (X_SEGMENTS + 1) + j);
 				sphereIndices.push_back((i + 1) * (X_SEGMENTS + 1) + j);
 				sphereIndices.push_back((i + 1) * (X_SEGMENTS + 1) + j + 1);
+
 				sphereIndices.push_back(i * (X_SEGMENTS + 1) + j);
 				sphereIndices.push_back((i + 1) * (X_SEGMENTS + 1) + j + 1);
 				sphereIndices.push_back(i * (X_SEGMENTS + 1) + j + 1);
@@ -122,8 +91,11 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(int), &sphereIndices[0], GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
+
+		
+
 
 
 
@@ -180,24 +152,69 @@ public:
 		glBindVertexArray(0);
 
 	}*/
+	void draw(Shader shader) {
+		// initialize (if necessary)
 
-	void draw(Shader shader, glm::mat4 projection, glm::mat4 view) {
-		
 		shader.use();
-		glm::mat4 model = glm::translate(model, glm::vec3(position.x, position.y, position.z * threeD));
-		model = glm::scale(model, glm::vec3(radius));
-
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(0.5, 0.0, 0.0));
+		model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
 		shader.setMat4("model", model);
-		shader.setMat4("projection", projection);
-		shader.setMat4("view", view);
-		shader.setBool("threeD", threeD);
-		shader.setVec3("color", color);
-
-		shader.setFloat("alpha", 1.0f - (curTime / lifeTime));
 		glBindVertexArray(this->VAO);
+
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
+	}
+
+	void draw(Shader shader, glm::mat4 projection, glm::mat4 view, glm::vec3 lightPos,Camera cam) {
+		
+		struct properties {
+			glm::vec3 ambient = glm::vec3(0.5f, 0.2f, 0.1f);
+			glm::vec3 specular = glm::vec3(0.2f, 0.2f, 0.2f);
+			float shininess = 32;
+			glm::vec3 diffuse = glm::vec3(1.5f, 1.5f, 1.5f);
+
+		} property, material;
+		property.ambient = glm::vec3(0.9f, 0.9f, 0.9f);
+
+		shader.use();
+		shader.setBool("useNormal", false);
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(0.5, 0.0, 0.0));
+		model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
+		shader.setMat4("model", model);
+		shader.setMat4("projection", projection);
+		shader.setMat4("view", view);
+
+
+		shader.setVec3("viewPos", cam.Position);
+		//shader.setMat4("model", model);
+		shader.setVec3("lightPos", lightPos);
+		shader.setVec3("material.diffuse", material.diffuse);
+		shader.setVec3("material.specular", material.specular);
+		shader.setFloat("material.shininess", material.shininess);
+
+		shader.setVec3("light.position", lightPos);
+		shader.setVec3("light.ambient", property.ambient);
+		shader.setVec3("light.specular", property.specular);
+		shader.setVec3("light.diffuse", property.diffuse);
+
+		shader.setFloat("light.constant", 1.0f);
+		shader.setFloat("light.linear", 0.09f);
+		shader.setFloat("light.quadratic", 0.032f);
+
+		shader.setFloat("alpha", 1.0f);
+		
+
+		shader.setVec3("material.diffuse", glm::vec3(0.0f));
+		shader.setVec3("material.ambient", glm::vec3(0.0f));
+
+		
+		glBindVertexArray(this->VAO);
+		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+		shader.setBool("useNormal", true);
 		
 	}
 

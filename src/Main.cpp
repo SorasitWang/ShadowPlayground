@@ -5,6 +5,45 @@
 #include <glm/glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
+
+
+#include "./header/imgui/imgui.h"
+#include "./header/imgui/imgui_impl_glfw.h"
+#include "./header/imgui/imgui_impl_opengl3.h"
+#include <stdio.h>
+
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <GLES2/gl2.h>
+// About Desktop OpenGL function loaders:
+//  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
+//  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
+//  You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
+#include <GL/gl3w.h>            // Initialize with gl3wInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
+#include <GL/glew.h>            // Initialize with glewInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
+#include <glad/glad.h>          // Initialize with gladLoadGL()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD2)
+#include <glad/gl.h>            // Initialize with gladLoadGL(...) or gladLoaderLoadGL()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING2)
+#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
+#include <glbinding/Binding.h>  // Initialize with glbinding::Binding::initialize()
+#include <glbinding/gl/gl.h>
+using namespace gl;
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING3)
+#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
+#include <glbinding/glbinding.h>// Initialize with glbinding::initialize()
+#include <glbinding/gl/gl.h>
+using namespace gl;
+#else
+#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#endif
+
+// Include glfw3.h after our OpenGL definitions
+#include <GLFW/glfw3.h>
+#include "./header/imgui/imgui_impl_glfw.h"
+
 #include "./header/shader_m.h"
 #include "./header/stb_image.h"
 #include "./header/camera.h"
@@ -38,7 +77,6 @@ glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-int winScore = 5;
 float x, y;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -48,11 +86,13 @@ Camera cam = Camera();
 Plane p1 = Plane();
 Plane p2 = Plane();
 Plane p3 = Plane();
+Ball b = Ball();
 float angle = 0.0;
-unsigned int show = 2;
+int depthMode = 1;
+unsigned int show = 1;
 int main()
 {
-
+    const char* glsl_version = "#version 130";
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -216,9 +256,10 @@ int main()
     p1.init(planeShader, -0.5f,true);
     p2.init(planeShader, -0.7f,true);
     p3.init(planeShader, -0.5f, true);
+    b.init(planeShader);
     // s.init(pointShader);
 
-    unsigned int depthMapFBO, depthMap, depthMapFBO2, depthMap2;
+    unsigned int depthMapFBO, depthMap, depthMapFBO2, depthMap2 , depthMapFBO3, depthMap3;
     unsigned int posMapFBO, posMap, posMapFBO2, posMap2;
 
     glGenFramebuffers(1, &depthMapFBO);
@@ -227,16 +268,18 @@ int main()
 
     initDepthMap(depthMapFBO, depthMap);
     initDepthMap(depthMapFBO2, depthMap2);
+    initDepthMap(depthMapFBO3, depthMap3);
 
     initPosMap(posMapFBO, posMap);
     initPosMap(posMapFBO2, posMap2);
 
     planeShader.use();
 
-    planeShader.setInt("shadowMapFar", 2);
+    planeShader.setInt("shadowMapFar",3);
+    planeShader.setInt("shadowMapBack", 2);
     planeShader.setInt("shadowMapNear", 1);
-    planeShader.setInt("posMapFar", 4);
-    planeShader.setInt("posMapNear", 3);
+    planeShader.setInt("posMapFar", 5);
+    planeShader.setInt("posMapNear", 4);
     simpleDepthShader.use();
     simpleDepthShader.setInt("shadowMapNear", 1);
     //star.init(rockShader, wall);
@@ -296,6 +339,18 @@ int main()
 
     //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+     
+     float setBias = 0.0f;
+     const char* showMode[] = {"Normal use bias" , "Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -332,7 +387,7 @@ int main()
 
 
         //--------------------- pos ---------------------------------------------//
-
+        glEnable(GL_CULL_FACE);
         glBindFramebuffer(GL_FRAMEBUFFER, posMapFBO);
         glEnable(GL_DEPTH_TEST);
         glCullFace(GL_FRONT);
@@ -353,7 +408,7 @@ int main()
         p2.draw(simplePosShader);
         simplePosShader.setMat4("model", groundModel);
         p3.draw(simplePosShader);
-       
+        b.draw(simplePosShader);
         simplePosShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         //glDrawArrays(GL_TRIANGLES, 0, 48);
@@ -369,7 +424,7 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
       
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, posMap);
 
         glBindFramebuffer(GL_FRAMEBUFFER, posMapFBO2);
@@ -397,8 +452,8 @@ int main()
         p2.draw(simplePosShader);
         simplePosShader.setMat4("model", groundModel);
         p3.draw(simplePosShader);
-
-        glActiveTexture(GL_TEXTURE4);
+        b.draw(simplePosShader);
+        glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, posMap2);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -422,6 +477,7 @@ int main()
         p2.draw(simpleDepthShader);
         simpleDepthShader.setMat4("model", groundModel);
         p3.draw(simpleDepthShader);
+        b.draw(simpleDepthShader);
 
 
         model = glm::mat4(1.0f);
@@ -450,12 +506,12 @@ int main()
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO2);
         glEnable(GL_DEPTH_TEST);
-        glCullFace(GL_FRONT);
+        glCullFace(GL_BACK);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         simpleDepthShader.setMat4("model", model);
-        simpleDepthShader.setBool("isSecond", true);
-        simpleDepthShader.setInt("posMapNear", 3);
+        
+        simpleDepthShader.setInt("posMapNear", 4);
 
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
@@ -476,12 +532,57 @@ int main()
         p2.draw(simpleDepthShader);
         simpleDepthShader.setMat4("model", groundModel);
         p3.draw(simpleDepthShader);
+        b.draw(simpleDepthShader);
 
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, depthMap2);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO3);
+        glEnable(GL_DEPTH_TEST);
+        glCullFace(GL_FRONT);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+        simpleDepthShader.setMat4("model", model);
+        simpleDepthShader.setBool("isSecond", true);
+
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 48);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
+        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
+        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        simpleDepthShader.setMat4("model", model);
+        glBindVertexArray(lightCubeVAO);
+        //glDrawArrays(GL_TRIANGLES, 0, 48);
+
+        simpleDepthShader.setMat4("model", planeModel);
+        p1.draw(simpleDepthShader);
+        simpleDepthShader.setMat4("model", pieceModel);
+        p2.draw(simpleDepthShader);
+        simpleDepthShader.setMat4("model", groundModel);
+        p3.draw(simpleDepthShader);
+        b.draw(simpleDepthShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
+        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
+        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        simpleDepthShader.setMat4("model", model);
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 48);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, depthMap3);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+       
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -495,16 +596,19 @@ int main()
         */
 
 
-        planeShader.use();
 
-        glDisable(GL_CULL_FACE);
-        //glCullFace(GL_FRONT);
+
+        //glDisable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
 
         glm::mat4 view = cam.GetViewMatrix();
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)SCR_HEIGHT / (float)SCR_WIDTH, 0.01f, 100.0f);
         planeShader.use();
         //planeShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
         planeShader.setInt("numObj", numObj);
+        planeShader.setInt("depthMode", show);
+        planeShader.setFloat("setBias", setBias);
+        planeShader.setBool("useNormal", true);
         //plane
 
        
@@ -521,6 +625,8 @@ int main()
         p2.draw(planeShader, proj, view, lightPos, cam);
         planeShader.setMat4("model", groundModel);
         p3.draw(planeShader, proj, view, lightPos, cam);
+
+        b.draw(planeShader, proj, view, lightPos, cam);
 
         //Box
         planeShader.use();
@@ -589,6 +695,36 @@ int main()
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        bool d = false;
+        float bias = 0.0f;
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Settings!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("Movement Property");
+            ImGui::Text("TAB to change Edit Mode");
+            ImGui::Button(showMode[show-1]);
+            
+            //ImGui::Checkbox("Open Edit mode", &_e);// Edit bools storing our window open/close state
+            //ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("Bias", &setBias, 0.0f, 0.5f);
+            // Display some text (you can use a format strings too)
+           
+
+          
+            ImGui::End();
+        }
+        ImGui::Render();
+        int display_w, display_h;
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -610,10 +746,11 @@ void processInput(GLFWwindow* window)
         show = 3;
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
         show = 4;
-
+    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+        show = 5;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
+    if (show <= 3) depthMode = show;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         angle += 0.01;
     //p1.move(0.01);
@@ -648,7 +785,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
     {
 
-        // s.move(2, 0.0);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
 }

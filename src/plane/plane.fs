@@ -33,6 +33,7 @@ uniform vec3 lightPos2;
 uniform vec3 viewPos;
 uniform Properties material,light;
 uniform sampler2D shadowMapFar;
+uniform sampler2D shadowMapBack;
 uniform sampler2D shadowMapNear;
 uniform sampler2D posMapFar;
 uniform sampler2D posMapNear;
@@ -42,6 +43,9 @@ uniform bool drawShadow;
 uniform mat4 modelObj;
 uniform int numObj;
 uniform Obj allObj[NR];
+uniform float setBias;
+uniform int depthMode;
+uniform bool useNormal;
 //float PointShadowCalculation(vec3 fragPos);
 
 float signedVolume(vec3 a,vec3 b,vec3 c,vec3 d){
@@ -114,23 +118,33 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    vec4 mapFar = texture(shadowMapFar, projCoords.xy);
+    vec4 mapBack = texture(shadowMapBack, projCoords.xy);
+    vec4 mapFar= texture(shadowMapFar, projCoords.xy);
     vec4 mapNear = texture(shadowMapNear, projCoords.xy);
     vec4 posFar = texture(posMapFar, projCoords.xy);
     vec4 posNear = texture(posMapNear, projCoords.xy);
-
-    float closestDepth = (1.0*mapNear.r + 1.0*mapFar.r )/2.0;//distance(texture(mapShadow, projCoords.xy).xyz,lightP); 1
-   
+    float closestDepth = 0.0;
+    bias = 0.0001;
+    if (depthMode == 1){ //normal
+        closestDepth= mapNear.r;//distance(texture(mapShadow, projCoords.xy).xyz,lightP); 1
+        bias = setBias;
+    }
+    else if (depthMode == 2){
+        closestDepth = (1.0*mapNear.r + 1.0*mapBack.r )/2.0;
+    }
+    else {
+        closestDepth = min((1.0*mapNear.r + 1.0*mapFar.r )/2.0,mapNear.r+0.005);
+    }
     //if (abs(dot(mapNear.xyz-fs_in.FragPos,fs_in.Normal)) <= 0.03)
       //  return 0.0;
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // calculate bias (based on depth map resolution and slope)
-    vec3 normal = normalize(fs_in.Normal);
-    vec3 lightDir = normalize(lightPos - fs_in.FragPos);
+   // vec3 normal = normalize(fs_in.Normal);
+    //vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     //float bias = 0.005*0;// max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     // check whether current frag pos is in shadow
-    bias = 0.0;
+    
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     //if(projCoords.z > 5.0)
       //  return 0.0;
@@ -168,9 +182,9 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     float rat = 5.0;
     float offset = 0.01;
     float plus = 1.5;
-    //if ((abs(rat*mapNear.x-plus - fs_in.FragPos.x) <= offset) && (abs(rat*mapNear.y-plus - fs_in.FragPos.y) <=offset)  && (abs(rat*mapNear.z-plus - fs_in.FragPos.z) <= offset)  ){
-        //return vec3(1.0,0.0,0.0);
-    //}
+    if ((abs(rat*mapNear.x-plus - fs_in.FragPos.x) <= offset) && (abs(rat*mapNear.y-plus - fs_in.FragPos.y) <=offset)  && (abs(rat*mapNear.z-plus - fs_in.FragPos.z) <= offset)  ){
+        return vec3(1.0,0.0,0.0);
+    }
     //if( length(projCoords.z-mapNear.xyz) < 0.1)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
         //return vec3(1.0,0.0,0.0);
     //return vec3(fs_in.FragPos.x) ;//vec3(projCoords.z,fs_in.FragPos.xz);
@@ -209,9 +223,11 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     //if( length(fs_in.FragPos.xyz-mapNear.xyz) < 0.001)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
         //return vec3(1.0,0.0,0.0);
     shadow =ShadowCalculation(fragPosLightSpace,mapShadowFar,mapShadowNear,bias,lightP);  // PointShadowCalculation(fs_in.FragPos);
-   
-    vec3 result = ambient+ ((1.0-shadow) * (diffuse + specular));
-
+    vec3 result;
+    if (useNormal)
+         result = ambient+ ((1.0-shadow)* (diffuse + specular));
+   else 
+        result = ambient+ ((1.0-shadow)* vec3(0.6));
    // vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     
     return result;
@@ -223,7 +239,7 @@ void main()
 {
     vec3 result =  calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace2,shadowMapFar,shadowMapNear,lightPos2);//calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace,shadowMap,lightPos);// +   calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace2,shadowMap2,lightPos2);
     
-    FragColor = vec4(result,alpha);
+    FragColor = vec4(result,1.0);
     
 } 
 
