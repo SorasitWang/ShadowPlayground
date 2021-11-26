@@ -10,7 +10,6 @@ out float depth;
 void main()
 {
     gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
-    pos = gl_Position*0.5 +0.5;
     world = model * vec4(aPos, 1.0);
   
    }

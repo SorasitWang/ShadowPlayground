@@ -23,7 +23,7 @@ public:
     bool selected = false;
 
 
-    void init(Shader shader, float yy) {
+    void init(Shader shader, float yy,bool front) {
         srand(time(0));
         y = yy;// (rand() / RAND_MAX) * 3 * yy;
         float interval = size / sub;
@@ -85,15 +85,25 @@ public:
         for (int i = 0; i < vertices.size(); i += 3) {
             std::cout << vertices[i] << " " << vertices[i + 1] << " " << vertices[i + 2] << std::endl;
         }*/
-        
-        vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+        if (front) {
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
 
-        
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+        }
+        else {
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+           
+            
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+        }
         glGenVertexArrays(1, &pVAO);
         glGenBuffers(1, &pVBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -167,14 +177,16 @@ public:
         material.ambient = glm::vec3(0.8, 0.5, 0.3);
         material.diffuse = glm::vec3(0.4, 0.8, 0.4);
         shader.use();
-        glm::mat4 model(1.0f);
-       
-       // model = glm::scale(model, glm::vec3(2.0f));
-        shader.setMat4("model", model);
+        //glm::mat4 model = glm::mat4(1.0f);
+        //model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
+        //model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+
+        //model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0, 0.0, -1.0));
+        
         shader.setMat4("projection", proj);
         shader.setMat4("view", view);
         shader.setVec3("viewPos", cam.Position);
-
+        //shader.setMat4("model", model);
         shader.setVec3("lightPos", lightPos);
         shader.setVec3("material.diffuse", material.diffuse);
         shader.setVec3("material.specular", material.specular);
