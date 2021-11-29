@@ -42,7 +42,8 @@ uniform float alpha;
 uniform bool drawShadow;
 uniform mat4 modelObj;
 uniform int numObj;
-uniform Obj allObj[NR];
+uniform Obj allObj[4];
+uniform Obj test;
 uniform float setBias;
 uniform int depthMode;
 uniform bool useNormal;
@@ -65,9 +66,9 @@ vec4 findIntersection(vec3 q1,vec3 q2,vec3 p1,vec3 p2,vec3 p3)
         float s5 = signedVolume(q1,q2,p3,p1);
         if (s3==s4 && s4 == s5){
            vec3 n = cross(p2-p1,p3-p1);
-           float t = -dot(q1,n-p1) / dot(q1,q2-q1);
-           //return vec4(q1+t*(q2-q1),0.0);
-           return vec4(0.0);
+           float t = -dot(q1-p1, n) / dot(q2 - q1,n);
+           return vec4(q1+t*(q2-q1),0.0);
+           //return vec4(0.0);
         } 
     }
     return vec4(-1.0);
@@ -75,38 +76,38 @@ vec4 findIntersection(vec3 q1,vec3 q2,vec3 p1,vec3 p2,vec3 p3)
 
 bool checkInRange(vec3 a,vec3 b,vec3 p)
 {
-    if (!( min(a.x,b.x) <=p.x && max(a.x,b.x) >= p.x)){
-        return false;
-    }
-    if (!( min(a.y,b.y) <=p.y && max(a.y,b.y) >= p.y)){
-        return false;
-    }
-    if (!( min(a.z,b.z) <=p.z && max(a.z,b.z) >= p.z)){
-        return false;
-    }
-
-    return true;
+    if ((min(a.x,b.x) <= p.x && max(a.x,b.x) >= p.x)
+    && (min(a.y,b.y) <= p.y && max(a.y,b.y) >= p.y)
+    && (min(a.z,b.z) <= p.z && max(a.z,b.z) >= p.z))
+        return true;
+    return false;
+    
 
 }
 
 int CalculateProbSameTexture(vec3 now,vec3 near)
 {
-    int count= 0;
+    //return 0;
+    int count= -1;
    // if (allObj[2].model == mat4(0.0)) return 1;
     vec4 a,b,c,re;
-    for (int i=0 ;i<numObj;i++){
+    for (int i=0 ;i<5;i++){
+       // vec3 u = allObj[i].vertex[0];
+        //int uu = allObj[i].num;
+        //mat4 r = allObj[i].model;
         for (int j=0;j<allObj[i].num;j+=3){
-            a =  allObj[i].model *  vec4(allObj[i].vertex[j],0.0);
-            b = allObj[i].model  *vec4(allObj[i].vertex[j+1],0.0);
-            c = allObj[i].model  *vec4(allObj[i].vertex[j+2],0.0);
+            a =  allObj[i].model *  vec4(allObj[i].vertex[j],1.0);
+           b = allObj[i].model  *vec4(allObj[i].vertex[j+1],1.0);
+            c = allObj[i].model  *vec4(allObj[i].vertex[j+2],1.0);
             re = findIntersection(now,near,a.xyz,b.xyz,c.xyz);
             if (re.w == 0.0){
-                //if (checkInRange(now,near,re.xyz)){
-                    count += 1 ;
-                //}
+                if (checkInRange(now,near,re.xyz)){
+                    return i ;
+                }
             }
         }
-    }
+        }
+    
     //if (count > 2) return 1;
     return count;
 }
@@ -148,7 +149,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     //if(projCoords.z > 5.0)
       //  return 0.0;
-    //return CalculateProbSameTexture(fs_in.FragPos,posNear.xyz);
+    return CalculateProbSameTexture(fs_in.FragPos,vec3(0.0));//posNear.xyz
     // PCF
     return shadow;
     shadow = 0.0;
@@ -183,7 +184,7 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     float offset = 0.01;
     float plus = 1.5;
     if ((abs(rat*mapNear.x-plus - fs_in.FragPos.x) <= offset) && (abs(rat*mapNear.y-plus - fs_in.FragPos.y) <=offset)  && (abs(rat*mapNear.z-plus - fs_in.FragPos.z) <= offset)  ){
-        return vec3(1.0,0.0,0.0);
+        //return vec3(1.0,0.0,0.0);
     }
     //if( length(projCoords.z-mapNear.xyz) < 0.1)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
         //return vec3(1.0,0.0,0.0);
@@ -228,6 +229,23 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
          result = ambient+ ((1.0-shadow)* (diffuse + specular));
    else 
         result = ambient+ ((1.0-shadow)* vec3(0.6));
+    int check = CalculateProbSameTexture(fs_in.FragPos,vec3(0.0));
+    if ( check == 0){
+        return vec3(1.0,0,0);
+    }
+    if (check == 1) {
+        return vec3(0.0,1.0,0);
+    }
+    if (check ==2){
+        return vec3(0.0,0.0,1.0);
+    }
+    if(check==3){
+        return vec3(1.0,1.0,0);
+    }
+    if (check == 4){
+        return vec3(0,1.0,1.0);
+    }
+    
    // vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     
     return result;

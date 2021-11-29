@@ -186,6 +186,7 @@
     <ClInclude Include="src\header\stb_image.h" />
     <ClInclude Include="src\plane\Plane.h" />
     <ClInclude Include="src\sphere\Sphere.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

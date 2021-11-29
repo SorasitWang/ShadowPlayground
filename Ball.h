@@ -29,12 +29,12 @@ struct ColProperty {
 	bool col = false;
 	int axis = -1;
 };
-const int Y_SEGMENTS = 50;
-const int X_SEGMENTS = 50;
+
 const GLfloat PI = 3.14159265358979323846f;
 class Ball {
 public:
-
+	const int Y_SEGMENTS = 10;
+	const int X_SEGMENTS = 10;
 	unsigned int VAO, VBO, EBO;
 	float radius = 0.1;
 	std::vector<float> sphereVertices;
@@ -180,10 +180,8 @@ public:
 
 		shader.use();
 		shader.setBool("useNormal", false);
-		glm::mat4 model(1.0f);
-		model = glm::translate(model, glm::vec3(0.5, 0.0, 0.0));
-		model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
-		shader.setMat4("model", model);
+		
+
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
 
