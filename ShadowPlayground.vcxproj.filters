@@ -92,6 +92,12 @@
     <None Include="..\Particle\header\Ball\ball.fs">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="src\shader\model.vs">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\shader\model.fs">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\plane\Plane.h">

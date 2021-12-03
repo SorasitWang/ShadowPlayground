@@ -33,18 +33,23 @@ struct ColProperty {
 const GLfloat PI = 3.14159265358979323846f;
 class Ball {
 public:
+	Ball() {
+		//Model ourModel("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\Res\\backpack.obj");
+		this->radius = 0.5;
+	};
 	const int Y_SEGMENTS = 10;
 	const int X_SEGMENTS = 10;
 	unsigned int VAO, VBO, EBO;
 	float radius = 0.1;
 	std::vector<float> sphereVertices;
 	std::vector<int> sphereIndices;
-
+	
+	Model ourModel = Model("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\Res\\rock.obj");
 
 	void init(Shader shader) {
 		
-
-	
+		
+		ourModel.Draw(shader);
 
 		/*2-Calculate the vertices of the sphere*/
 		//Generate the vertices of the ball
@@ -154,21 +159,20 @@ public:
 	}*/
 	void draw(Shader shader) {
 		// initialize (if necessary)
-
+		glFrontFace(GL_CW);
 		shader.use();
-		glm::mat4 model(1.0f);
-		model = glm::translate(model, glm::vec3(0.5, 0.0, 0.0));
-		model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
-		shader.setMat4("model", model);
-		glBindVertexArray(this->VAO);
+		ourModel.Draw(shader);
+		glFrontFace(GL_CCW);
+		/*glBindVertexArray(this->VAO);
 
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 
 	}
 
 	void draw(Shader shader, glm::mat4 projection, glm::mat4 view, glm::vec3 lightPos,Camera cam) {
 		
+		glFrontFace(GL_CW);
 		struct properties {
 			glm::vec3 ambient = glm::vec3(0.5f, 0.2f, 0.1f);
 			glm::vec3 specular = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -177,9 +181,10 @@ public:
 
 		} property, material;
 		property.ambient = glm::vec3(0.9f, 0.9f, 0.9f);
-
+		material.ambient = glm::vec3(0.8, 0.5, 0.3);
+		material.diffuse = glm::vec3(0.4, 0.8, 0.4);
 		shader.use();
-		shader.setBool("useNormal", false);
+		shader.setBool("useNormal", true);
 		
 
 		shader.setMat4("projection", projection);
@@ -203,16 +208,13 @@ public:
 		shader.setFloat("light.quadratic", 0.032f);
 
 		shader.setFloat("alpha", 1.0f);
-		
-
-		shader.setVec3("material.diffuse", glm::vec3(0.0f));
-		shader.setVec3("material.ambient", glm::vec3(0.0f));
-
-		
-		glBindVertexArray(this->VAO);
+	
+		ourModel.Draw(shader);
+		glFrontFace(GL_CCW);
+		/*glBindVertexArray(this->VAO);
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
-		shader.setBool("useNormal", true);
+		shader.setBool("useNormal", true);*/
 		
 	}
 

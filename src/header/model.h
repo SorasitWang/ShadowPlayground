@@ -41,8 +41,14 @@ public:
     // draws the model, and thus all its meshes
     void Draw(Shader& shader)
     {
-        for (unsigned int i = 0; i < meshes.size(); i++)
+        int j = 0;
+        //std::cout << meshes.size()<< std::endl;
+        for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
+  
+            //j += meshes[i].vertices.size();
+            
+        }
     }
 
 private:
@@ -165,6 +171,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
+        std::cout << vertices.size() << " " << indices.size() << std::endl;
         return Mesh(vertices, indices, textures);
     }
 

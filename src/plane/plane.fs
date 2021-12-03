@@ -23,11 +23,12 @@ struct Obj {
 in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
+    vec2 TexCoords;
     vec4 FragPosLightSpace;
     vec4 FragPosLightSpace2;
 } fs_in;
 
-#define NR 4
+#define NR 5
 uniform vec3 lightPos;
 uniform vec3 lightPos2;
 uniform vec3 viewPos;
@@ -42,13 +43,17 @@ uniform float alpha;
 uniform bool drawShadow;
 uniform mat4 modelObj;
 uniform int numObj;
-uniform Obj allObj[4];
+uniform Obj allObj[5];
 uniform Obj test;
 uniform float setBias;
 uniform int depthMode;
+uniform bool isModel;
 uniform bool useNormal;
 //float PointShadowCalculation(vec3 fragPos);
 
+bool notSamePos(vec3 a,vec3 b){
+    return length(a-b) > 0.001;
+}
 float signedVolume(vec3 a,vec3 b,vec3 c,vec3 d){
        return sign(dot(cross(b-a,c-a),d-a));
 }
@@ -76,9 +81,10 @@ vec4 findIntersection(vec3 q1,vec3 q2,vec3 p1,vec3 p2,vec3 p3)
 
 bool checkInRange(vec3 a,vec3 b,vec3 p)
 {
-    if ((min(a.x,b.x) <= p.x && max(a.x,b.x) >= p.x)
-    && (min(a.y,b.y) <= p.y && max(a.y,b.y) >= p.y)
-    && (min(a.z,b.z) <= p.z && max(a.z,b.z) >= p.z))
+    float offset = 0.000;
+    if ((min(a.x,b.x) <= p.x + offset && max(a.x,b.x) >= p.x -offset)
+    && (min(a.y,b.y) <= p.y + offset&& max(a.y,b.y) >= p.y-offset)
+    && (min(a.z,b.z) <= p.z + offset&& max(a.z,b.z) >= p.z-offset))
         return true;
     return false;
     
@@ -88,28 +94,38 @@ bool checkInRange(vec3 a,vec3 b,vec3 p)
 int CalculateProbSameTexture(vec3 now,vec3 near)
 {
     //return 0;
-    int count= -1;
+    float rat = 5.0;
+    float offset = 0.01;
+    float plus = 1.5;
+
    // if (allObj[2].model == mat4(0.0)) return 1;
     vec4 a,b,c,re;
-    for (int i=0 ;i<5;i++){
+    int i =4;
+    int count = 0;
+    //for (int i=0 ;i<5;i++){
        // vec3 u = allObj[i].vertex[0];
         //int uu = allObj[i].num;
         //mat4 r = allObj[i].model;
-        for (int j=0;j<allObj[i].num;j+=3){
-            a =  allObj[i].model *  vec4(allObj[i].vertex[j],1.0);
-           b = allObj[i].model  *vec4(allObj[i].vertex[j+1],1.0);
-            c = allObj[i].model  *vec4(allObj[i].vertex[j+2],1.0);
+        for (int j=0;j<test.num;j+=3){
+            a =  test.model *  vec4(test.vertex[j],1.0);
+           b = test.model  *vec4(test.vertex[j+1],1.0);
+            c = test.model  *vec4(test.vertex[j+2],1.0);
+            //a = (a+plus)/rat;
+            //b = (b+plus)/rat;
+            //c = (b+plus)/rat;
             re = findIntersection(now,near,a.xyz,b.xyz,c.xyz);
             if (re.w == 0.0){
-                if (checkInRange(now,near,re.xyz)){
-                    return i ;
-                }
+                if (checkInRange(now,near,re.xyz) && notSamePos(re.xyz,now) && notSamePos(re.xyz,near)){
+                    count += 1;
+                    //if (count>1)
+                   return 0 ;
+               }
             }
-        }
-        }
+       }
+        //}
     
     //if (count > 2) return 1;
-    return count;
+    return -1;
 }
 
 float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D mapShadowNear,float bias,vec3 lightP)
@@ -126,6 +142,9 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     vec4 posNear = texture(posMapNear, projCoords.xy);
     float closestDepth = 0.0;
     bias = 0.0001;
+     float rat = 5.0;
+    float offset = 0.01;
+    float plus = 1.5;
     if (depthMode == 1){ //normal
         closestDepth= mapNear.r;//distance(texture(mapShadow, projCoords.xy).xyz,lightP); 1
         bias = setBias;
@@ -149,8 +168,11 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     //if(projCoords.z > 5.0)
       //  return 0.0;
-    return CalculateProbSameTexture(fs_in.FragPos,vec3(0.0));//posNear.xyz
+    posNear.xyz = rat*posNear.xyz - plus;
+    //if (length(posNear.xyz-fs_in.FragPos) < 0.1)
+      //  return CalculateProbSameTexture(fs_in.FragPos,posNear.xyz);//posNear.xyz
     // PCF
+    //return 1.0;
     return shadow;
     shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMapFar, 0);
@@ -184,7 +206,7 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     float offset = 0.01;
     float plus = 1.5;
     if ((abs(rat*mapNear.x-plus - fs_in.FragPos.x) <= offset) && (abs(rat*mapNear.y-plus - fs_in.FragPos.y) <=offset)  && (abs(rat*mapNear.z-plus - fs_in.FragPos.z) <= offset)  ){
-        //return vec3(1.0,0.0,0.0);
+       // return vec3(1.0,0.0,0.0);
     }
     //if( length(projCoords.z-mapNear.xyz) < 0.1)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
         //return vec3(1.0,0.0,0.0);
@@ -220,24 +242,34 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     projCoords = projCoords * 0.5 + 0.5;
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     //vec4 mapFar = texture(mapShadowFar, projCoords.xy);
-     mapNear = texture(posMapNear, projCoords.xy);
+    vec4 posNear = texture(posMapNear, projCoords.xy);
     //if( length(fs_in.FragPos.xyz-mapNear.xyz) < 0.001)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
         //return vec3(1.0,0.0,0.0);
-    shadow =ShadowCalculation(fragPosLightSpace,mapShadowFar,mapShadowNear,bias,lightP);  // PointShadowCalculation(fs_in.FragPos);
+    shadow = ShadowCalculation(fragPosLightSpace,mapShadowFar,mapShadowNear,bias,lightP);  // PointShadowCalculation(fs_in.FragPos);
     vec3 result;
-    if (useNormal)
-         result = ambient+ ((1.0-shadow)* (diffuse + specular));
-   else 
-        result = ambient+ ((1.0-shadow)* vec3(0.6));
-    int check = CalculateProbSameTexture(fs_in.FragPos,vec3(0.0));
+         result = ambient+ ((1.0-shadow)* (diffuse*0 + specular));
+         result = (1.0-shadow)*vec3(0.0,0.7,0.3);
+
+
+   // mapNear.x = rat*mapNear.x-plus;
+   // mapNear.y = rat*mapNear.y-plus;
+   // mapNear.z = rat*mapNear.z-plus;
+   // float x = (fs_in.FragPos.x+plus)/rat;
+    //float y = (fs_in.FragPos.y+plus)/rat;
+    //float z = (fs_in.FragPos.z+plus)/rat;
+    posNear.xyz = rat*posNear.xyz - plus;
+    int check = -1;
+    if (length(posNear.xyz-fs_in.FragPos) < 0.2){
+        //check = CalculateProbSameTexture(fs_in.FragPos,posNear.xyz);//posNear.xyz
+        }
     if ( check == 0){
         return vec3(1.0,0,0);
     }
     if (check == 1) {
-        return vec3(0.0,1.0,0);
+        return vec3(0.0,1.0,0.0);
     }
     if (check ==2){
-        return vec3(0.0,0.0,1.0);
+       return vec3(0.0,0.0,1.0);
     }
     if(check==3){
         return vec3(1.0,1.0,0);
@@ -248,16 +280,19 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     
    // vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     
-    return result;
+
+    return result;//CalculateProbSameTexture(fs_in.FragPos, mapNear.xyz);
 
 }
 
 
 void main()
 {
+   
     vec3 result =  calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace2,shadowMapFar,shadowMapNear,lightPos2);//calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace,shadowMap,lightPos);// +   calculate(light,fs_in.Normal,viewPos,fs_in.FragPos,fs_in.FragPosLightSpace2,shadowMap2,lightPos2);
     
     FragColor = vec4(result,1.0);
+   
     
 } 
 

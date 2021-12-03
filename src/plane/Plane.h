@@ -18,15 +18,67 @@ public:
     int areaBase = 1, areaHill =0 ;
     float  buffAreaHill = 2.0f;
     int sub = 10, v = 56;
-    std::vector<float> vertices;
+    std::vector<float> ver;
     std::pair<int, int> vSelect;
     bool selected = false;
+    float vertices[6*8*6] = {
+         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left
+    0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-right    
+    0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right              
+    0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right
+   -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-left
+   -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left           
+   // front face
+   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
+    0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
+    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-right        
+    0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
+   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
+   -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-left        
+   // left face
+   -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
+   -0.5f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
+   -0.5f,  0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // top-left       
+   -0.5f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
+   -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
+   -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // bottom-right
 
+   // right face
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left
+    0.5f,  0.5f, -0.5f,  1.0f, 0.0f,0.0f, // top-right      
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right          
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, // bottom-left
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left  
+
+    //top face
+     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,// top-left
+    0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, // top-right
+    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
+    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+   -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
+   -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  // top-left   
+
+   // bottom face
+   0.5f, -0.5f, 0.5f,  0.0f, -1.0f, 0.0f, // bottom-left
+   0.5f, -0.5f, -0.5f,  0.0f,-1.0f, 0.0f,// top-left
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, // top-right
+    
+    
+
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, // top-right
+    -0.5f, -0.5f, 0.5f,  0.0f, -1.0f, 0.0f,// bottom-right
+    0.5f, -0.5f, 0.5f,  0.0f, -1.0f, 0.0f, // bottom-left
+    
+    
+    };
 
     void init(Shader shader, float yy,bool front) {
         srand(time(0));
         y = yy;// (rand() / RAND_MAX) * 3 * yy;
         float interval = size / sub;
+        unsigned dataArraySize = sizeof(vertices) / sizeof(float);
+        copy(&vertices[0], &vertices[dataArraySize], back_inserter(ver));
        /* for (int i = 0; i < sub - 1; i++) {
             for (int j = 0; j < sub-1; j++) {
                 //left tri
@@ -85,7 +137,8 @@ public:
         for (int i = 0; i < vertices.size(); i += 3) {
             std::cout << vertices[i] << " " << vertices[i + 1] << " " << vertices[i + 2] << std::endl;
         }*/
-        if (front) {
+       
+       /* if (front) {
             vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
@@ -93,6 +146,16 @@ public:
             vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+        
+            /*vertices.push_back(1.0f); vertices.push_back(y-0.1); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y - 0.1); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y - 0.1); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+
+
+            vertices.push_back(-1.0f); vertices.push_back(y - 0.1); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(-1.0f); vertices.push_back(y - 0.1); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            vertices.push_back(1.0f); vertices.push_back(y - 0.1); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
+            
         }
         else {
             vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
@@ -103,14 +166,14 @@ public:
             vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(-1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(-1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
             vertices.push_back(1.0f); vertices.push_back(y); vertices.push_back(1.0f); vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
-        }
+        }*/
         glGenVertexArrays(1, &pVAO);
         glGenBuffers(1, &pVBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         glBindVertexArray(pVAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, pVBO);
-        glBufferData(GL_ARRAY_BUFFER, 4 * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 4 * ver.size(), &ver[0], GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -136,7 +199,7 @@ public:
         glBindVertexArray(pVAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, pVBO);
-        glBufferData(GL_ARRAY_BUFFER, 4 * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 4 * ver.size(), &ver[0], GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -144,13 +207,13 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6/*pow(sub, 2) * 12*/);
+        glDrawArrays(GL_TRIANGLES, 0, 36/*pow(sub, 2) * 12*/);
         glBindVertexArray(0);
     
     }
 
     std::vector<float> getVertices() {
-        return vertices;
+        return ver;
      }
 
     void draw(Shader shader,glm::mat4 proj,glm::mat4 view,glm::vec3 lightPos,Camera cam) {
@@ -166,7 +229,7 @@ public:
         glBindVertexArray(pVAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, pVBO);
-        glBufferData(GL_ARRAY_BUFFER, 4 * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 4 * ver.size(), &ver[0], GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -203,7 +266,7 @@ public:
 
         shader.setFloat("alpha", 1.0f);
         glBindVertexArray(pVAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_TRIANGLES, 0,6/* pow(sub,2)*12*/);
+        glDrawArrays(GL_TRIANGLES, 0,36/* pow(sub,2)*12*/);
         shader.use();
         shader.setVec3("material.diffuse",glm::vec3(0.0f));
         shader.setVec3("material.ambient", glm::vec3(0.0f));

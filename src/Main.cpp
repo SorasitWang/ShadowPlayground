@@ -43,7 +43,7 @@ using namespace gl;
 // Include glfw3.h after our OpenGL definitions
 #include <GLFW/glfw3.h>
 #include "./header/imgui/imgui_impl_glfw.h"
-
+#include "./header/model.h"
 #include "./header/shader_m.h"
 #include "./header/stb_image.h"
 #include "./header/camera.h"
@@ -52,7 +52,6 @@ using namespace gl;
 #include "../Ball.h"
 #include "./sphere/Sphere.h"
 #include <string>
-#include "Util.h"
 //#include "../Character.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -72,7 +71,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 const float SIZE = 6;
-const int numObj = 5;
+const int numObj = 3;
 glm::vec3 lightPos(1.0f, 1.6f, 1.0f);
 glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
 float lastX = SCR_WIDTH / 2.0f;
@@ -87,74 +86,11 @@ Camera cam = Camera();
 Plane p1 = Plane();
 Plane p2 = Plane();
 Plane p3 = Plane();
-Ball b = Ball();
+
 float angle = 0.0;
 int depthMode = 1;
+float setBias = 0.0f;
 unsigned int show = 1;
-
-
-float signedVolume(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d) {
-    return glm::sign(glm::dot(glm::cross(b - a, c - a), d - a));
-}
-
-glm::vec4 findIntersection(glm::vec3 q1, glm::vec3 q2, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
-{
-
-    float s1 = signedVolume(q1, p1, p2, p3);
-    float s2 = signedVolume(q2, p1, p2, p3);
-
-    if (s1 != s2) {
-
-        float s3 = signedVolume(q1, q2, p1, p2);
-        float s4 = signedVolume(q1, q2, p2, p3);
-        float s5 = signedVolume(q1, q2, p3, p1);
-        if (s3 == s4 && s4 == s5) {
-            glm::vec3 n = cross(p2 - p1, p3 - p1);
-            float t = -glm::dot(q1-p1, n) / dot(q2 - q1,n);
-            std::cout << "intersect ";
-            printVec3(q1 + t * (q2 - q1));
-            return glm::vec4(q1 + t * (q2 - q1),0.0);
-            //std::cout << 1 << std::endl;
-           // return glm::vec3(0.0);
-        }
-    }
-    return glm::vec4(-1.0);
-}
-/*
-bool checkInRange(glm::vec3 a, glm::vec3 b, glm::vec3 p)
-{
-    if (!(min(a.x, b.x) <= p.x && max(a.x, b.x) >= p.x)) {
-        return false;
-    }
-    if (!(min(a.y, b.y) <= p.y && max(a.y, b.y) >= p.y)) {
-        return false;
-    }
-    if (!(min(a.z, b.z) <= p.z && max(a.z, b.z) >= p.z)) {
-        return false;
-    }
-
-    return true;
-
-}*/
-
-int CalculateProbSameTexture(glm::vec3 now, glm::vec3 near)
-{
-    //return 0;
-    int count = 0;
-    // if (allObj[2].model == mat4(0.0)) return 1;
-    glm::vec3 a, b, c, re;
-    
-    findIntersection(now, near, glm::vec3(-0.9, - 0.2 ,- 1),
-        glm::vec3(1.1 ,- 0.2 ,- 1), glm::vec3(1.1, - 0.2 ,1));
-    findIntersection(now, near, glm::vec3(1.1, -0.2, 1),
-        glm::vec3(-0.9, -0.2, 1), glm::vec3(-0.9, -0.2, -1));
-    
-
-    //if (count > 2) return 1;
-    return count;
-}
-
-
 int main()
 {
     const char* glsl_version = "#version 130";
@@ -191,7 +127,7 @@ int main()
 
 
 
-
+    Ball b = Ball();
     glEnable(GL_DEPTH_TEST);
     // Shader pointShader("point.vs", "ourShader.fs");
     Shader planeShader("src/plane/plane.vs", "src/plane/plane.fs");
@@ -199,6 +135,7 @@ int main()
     Shader simpleDepthShader("src/shader/ourShader.vs", "src/shader/ourshader.fs");
     Shader lightCubeShader("src/shader/lightcube.vs", "src/shader/lightcube.fs");
     Shader shader("src/shader/texture.vs", "src/shader/texture.fs");
+    Shader modelShader("src/shader/model.vs", "src/plane/plane.fs");
     Shader simplePosShader("src/shader/pos.vs", "src/shader/pos.fs");
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -318,13 +255,13 @@ int main()
     glEnableVertexAttribArray(1);
 
 
-    p1.init(planeShader, -0.5f,true);
-    p2.init(planeShader, -0.7f,true);
+    p1.init(planeShader, -0.5f, true);
+    p2.init(planeShader, -0.7f, true);
     p3.init(planeShader, -0.5f, true);
-    b.init(planeShader);
+    b.init(modelShader);
     // s.init(pointShader);
 
-    unsigned int depthMapFBO, depthMap, depthMapFBO2, depthMap2 , depthMapFBO3, depthMap3;
+    unsigned int depthMapFBO, depthMap, depthMapFBO2, depthMap2, depthMapFBO3, depthMap3;
     unsigned int posMapFBO, posMap, posMapFBO2, posMap2;
 
     glGenFramebuffers(1, &depthMapFBO);
@@ -340,13 +277,20 @@ int main()
 
     planeShader.use();
 
-    planeShader.setInt("shadowMapFar",3);
+    planeShader.setInt("shadowMapFar", 3);
     planeShader.setInt("shadowMapBack", 2);
     planeShader.setInt("shadowMapNear", 1);
     planeShader.setInt("posMapFar", 5);
     planeShader.setInt("posMapNear", 4);
     simpleDepthShader.use();
     simpleDepthShader.setInt("shadowMapNear", 1);
+    modelShader.use();
+
+    modelShader.setInt("shadowMapFar", 3);
+    modelShader.setInt("shadowMapBack", 2);
+    modelShader.setInt("shadowMapNear", 1);
+    modelShader.setInt("posMapFar", 5);
+    modelShader.setInt("posMapNear", 4);
     //star.init(rockShader, wall);
 
     glEnable(GL_BLEND);
@@ -357,7 +301,7 @@ int main()
     glCullFace(GL_FRONT);
     glFrontFace(GL_CCW);
 
-    
+
     float orth = 2.0f;
     float near_plane = 0.1f;
     float far_plane = 15.0f;
@@ -374,58 +318,68 @@ int main()
     planeShader.use();
     //p1 + p2
     planeShader.setInt("xxx", 3);
-    planeShader.setInt("allObj[0].num", p1.vertices.size()/6);
-    planeShader.setInt("allObj[1].num", p1.vertices.size()/6);
-    planeShader.setInt("allObj[2].num", p1.vertices.size() / 6);
-    planeShader.setInt("test.num", p1.vertices.size() / 6);
-    for (int i = 0; i < p1.vertices.size(); i +=6) {
-        planeShader.setVec3(std::string("allObj[0].vertex[")+ std::to_string(i/6) + std::string("]"), glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
-        planeShader.setVec3(std::string("allObj[1].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
-        planeShader.setVec3(std::string("test.vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
+    planeShader.setBool("isModel", false);
+    planeShader.setInt("allObj[0].num", p1.ver.size() / 6);
+    planeShader.setInt("allObj[1].num", p1.ver.size() / 6);
+    planeShader.setInt("allObj[2].num", p1.ver.size() / 6);
+    planeShader.setInt("allObj[4].num", p1.ver.size() / 6);
+    for (int i = 0; i < p1.ver.size(); i += 6) {
+        planeShader.setVec3(std::string("allObj[0].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        planeShader.setVec3(std::string("allObj[1].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        planeShader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+
     }
+   
     planeShader.setInt("allObj[3].num", 6 * 8);
-    planeShader.setInt("allObj[4].num", 6 * 8);
     for (int i = 0; i < 6 * 8 * 6; i += 6) {
+        //planeShader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
         planeShader.setVec3(std::string("allObj[3].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
-        planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
-
-    }/*
-    planeShader.setInt("allObj[4].num",b.X_SEGMENTS*b.Y_SEGMENTS*6);
-    int idx = 0;
-    for (int i = 0; i < b.X_SEGMENTS * b.Y_SEGMENTS; i += 6) {
+    }
+    //planeShader.setInt("allObj[4].num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
+    planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
+    int idx = 0,c=0;
+    for (int i = 0; i < b.X_SEGMENTS * b.Y_SEGMENTS; i+=1) {
         for (int j = 0; j < 6; j++) {
-            idx = 3 * b.sphereIndices[i + j];
-            planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"), 
-                glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx+1], b.sphereVertices[idx+2]));
+            idx = 3 * b.sphereIndices[6*i + j];
+            //planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"),
+                //glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
+            planeShader.setVec3(std::string("test.vertex[") + std::to_string(c) + std::string("]"),
+                glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
+            c += 1;
         }
-        
-    }*/
 
-    
+    }
+    std::cout << c << std::endl;
+
     glm::mat4 planeModel(1.0f);
-    planeModel = glm::translate(planeModel, glm::vec3(-0.4, 0.0, 0.0));
+    planeModel = glm::translate(planeModel, glm::vec3(-0.6, 0.0, 0.0));
+    planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 2.0f));
     planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
     //planeModel = glm::rotate(planeModel, glm::radians(30.0f), glm::vec3(1.0, 1.0, 0.0));
     //planeModel = glm::translate(planeModel, glm::vec3(0.8, 0.0, 0.0));
     glm::mat4 pieceModel(1.0f);
     pieceModel = glm::translate(pieceModel, glm::vec3(0.0, 0.20, -0.5));
-    pieceModel = glm::scale(pieceModel, glm::vec3(0.4f, 0.4f, 0.4f));
+    pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.5f, 0.5f));
     pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
     glm::mat4 groundModel(1.0f);
-    groundModel = glm::translate(groundModel, glm::vec3(0.1, 0.3, 0.0));
-    //groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
+    groundModel = glm::translate(groundModel, glm::vec3(0.1, -0.2, 0.0));
+    groundModel = glm::scale(groundModel, glm::vec3(2.0f, 0.01f, 2.0f));
+    groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
 
+    //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
     glm::mat4 ballModel(1.0f);
     ballModel = glm::translate(ballModel, glm::vec3(0.5, 0.0, 0.0));
+    ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ballModel = glm::scale(ballModel, glm::vec3(0.1, 0.1, 0.1));
 
-    glm::mat4 boxModel(1.0f);
-    boxModel = glm::translate(boxModel, glm::vec3(-0.4, 0.0, 0.43));
+    glm::mat4 boxModel = glm::mat4(1.0f);
+    boxModel = glm::mat4(1.0f);
+    boxModel = glm::translate(boxModel, glm::vec3(-0.2, 0.0, 0.3));
     boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
 
-    boxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-
+    //sboxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -433,21 +387,13 @@ int main()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
-     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-     
-     float setBias = 0.0f;
-     const char* showMode[] = {"Normal use bias" , "Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
+    modelShader.use();
+    modelShader.setBool("isModel", true);
     
-     for (int i = 0; i < 6 * 8 * 6; i += 6) {
-         //printVec3(glm::vec3(p1.vertices[i], p1.vertices[i + 1], p1.vertices[i + 2]));
-         glm::vec4 ver = boxModel * glm::vec4(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
-         //printVec3(glm::vec3(ver.x, ver.y, ver.z));
-         //std::cout << std::endl;
-         CalculateProbSameTexture(glm::vec3(ver.x, ver.y, ver.z), glm::vec3(0.0f));
-     }
-     //CalculateProbSameTexture(glm::vec3 now, glm::vec3(0.0f));
-     while (!glfwWindowShouldClose(window))
+    const char* showMode[] = { "Normal use bias" , "Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
+    while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -473,9 +419,9 @@ int main()
 
 
 
-       
 
-       
+
+
 
         lightView = glm::lookAt(lightPos2, glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
         lightSpaceMatrix2 = lightProjection * lightView;
@@ -490,13 +436,8 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         simplePosShader.use();
         simplePosShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+       
 
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        
         simplePosShader.setMat4("model", planeModel);
         //simpleDepthShader.setBool("isSecond", true);
         p1.draw(simplePosShader);
@@ -506,21 +447,16 @@ int main()
         p3.draw(simplePosShader);
         simplePosShader.setMat4("model", ballModel);
         b.draw(simplePosShader);
-        simplePosShader.setMat4("model", model);
+        simplePosShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
         //glDrawArrays(GL_TRIANGLES, 0, 48);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-       
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
+        
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simplePosShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
-      
+
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, posMap);
 
@@ -532,17 +468,9 @@ int main()
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+     
 
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
 
-        simplePosShader.setMat4("model", model);
-        glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
-
-       
         simplePosShader.setMat4("model", planeModel);
         p1.draw(simplePosShader);
         simplePosShader.setMat4("model", pieceModel);
@@ -566,7 +494,7 @@ int main()
         simpleDepthShader.use();
         simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
         //simplePosShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
-      
+
 
         simpleDepthShader.setMat4("model", planeModel);
         simpleDepthShader.setBool("isSecond", false);
@@ -579,23 +507,8 @@ int main()
         b.draw(simpleDepthShader);
 
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.2, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-       
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-       // model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simpleDepthShader.setMat4("model", model);
-        glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-       
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simpleDepthShader.setMat4("model", model);
+     
+        simpleDepthShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
@@ -608,22 +521,14 @@ int main()
         glCullFace(GL_BACK);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-        simpleDepthShader.setMat4("model", model);
-        
+        simpleDepthShader.setMat4("model", boxModel);
+
         simpleDepthShader.setInt("posMapNear", 4);
 
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-       
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simpleDepthShader.setMat4("model", model);
-        glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
+      
 
         simpleDepthShader.setMat4("model", planeModel);
         p1.draw(simpleDepthShader);
@@ -644,21 +549,12 @@ int main()
         glCullFace(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-        simpleDepthShader.setMat4("model", model);
+        simpleDepthShader.setMat4("model", boxModel);
         simpleDepthShader.setBool("isSecond", true);
 
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simpleDepthShader.setMat4("model", model);
-        glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
 
         simpleDepthShader.setMat4("model", planeModel);
         p1.draw(simpleDepthShader);
@@ -669,13 +565,7 @@ int main()
         simpleDepthShader.setMat4("model", ballModel);
         b.draw(simpleDepthShader);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.4, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        simpleDepthShader.setMat4("model", model);
+        simpleDepthShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 48);
 
@@ -683,24 +573,24 @@ int main()
         glBindTexture(GL_TEXTURE_2D, depthMap3);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-       
+
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-       
-        
-        //draw
-        
-        
-        
+        /*
+
+        draw
+
+
+        */
 
 
 
 
         //glDisable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+        //glCullFace(GL_FRONT);
 
         glm::mat4 view = cam.GetViewMatrix();
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)SCR_HEIGHT / (float)SCR_WIDTH, 0.01f, 100.0f);
@@ -712,52 +602,45 @@ int main()
         planeShader.setBool("useNormal", true);
         //plane
 
-       
+
         planeShader.setMat4("model", planeModel);
-       
+
         planeShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
         planeShader.setFloat("far_plane", far_plane);
         planeShader.setBool("drawShadow", false);
         planeShader.setMat4("allObj[0].model", planeModel);
         planeShader.setMat4("allObj[1].model", pieceModel);
         planeShader.setMat4("allObj[2].model", groundModel);
-        planeShader.setMat4("test.model", groundModel);
-        planeShader.setMat4("allObj[4].model", ballModel);
-
+        planeShader.setMat4("test.model", ballModel);
+        planeShader.setMat4("allObj[5].model", ballModel);
         p1.draw(planeShader, proj, view, lightPos2, cam);
         planeShader.setMat4("model", pieceModel);
-        p2.draw(planeShader, proj, view, lightPos, cam);
+        p2.draw(planeShader, proj, view, lightPos2, cam);
         planeShader.setMat4("model", groundModel);
-        p3.draw(planeShader, proj, view, lightPos, cam);
-        planeShader.setMat4("model", ballModel);
-        b.draw(planeShader, proj, view, lightPos, cam);
+        p3.draw(planeShader, proj, view, lightPos2, cam);
+
+        modelShader.use();
+        modelShader.setInt("numObj", numObj);
+        modelShader.setInt("depthMode", show);
+        modelShader.setFloat("setBias", setBias);
+        modelShader.setBool("useNormal", true);
+        modelShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
+
+        //plane
+
+        modelShader.setMat4("model", ballModel);
+        b.draw(modelShader, proj, view, lightPos2, cam);
 
         //Box
         planeShader.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(boxX, 0.0, 0.5));
-        // a smaller cube
-        planeShader.setMat4("model", model);
+
         planeShader.setBool("drawShadow", true);
         planeShader.setVec3("material.diffuse", glm::vec3(0.8, 0.5, 0.3));
         planeShader.setFloat("alpha", 1.0f);
 
 
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.2, 0.0, 0.43));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-       
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-       // planeShader.setMat4("allObj[2].model", model);
-        
-        planeShader.setMat4("model", model);
-        glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
-
-        
-        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+ 
         planeShader.setMat4("allObj[3].model", boxModel);
         planeShader.setMat4("modelObj", glm::mat4(0.0f));
         planeShader.setMat4("model", boxModel);
@@ -768,8 +651,8 @@ int main()
         lightCubeShader.use();
         lightCubeShader.setMat4("projection", proj);
         lightCubeShader.setMat4("view", view);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f));
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.02f));
 
         lightCubeShader.setMat4("model", model);
@@ -778,7 +661,7 @@ int main()
 
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f));
+        model = glm::translate(model, lightPos2);
         model = glm::scale(model, glm::vec3(0.01));
         lightCubeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
@@ -809,16 +692,16 @@ int main()
 
             ImGui::Text("Movement Property");
             ImGui::Text("TAB to change Edit Mode");
-            ImGui::Button(showMode[show-1]);
-            
+            ImGui::Button(showMode[show - 1]);
+
             //ImGui::Checkbox("Open Edit mode", &_e);// Edit bools storing our window open/close state
             //ImGui::Checkbox("Another Window", &show_another_window);
 
             ImGui::SliderFloat("Bias", &setBias, 0.0f, 0.5f);
             // Display some text (you can use a format strings too)
-           
 
-          
+
+
             ImGui::End();
         }
         ImGui::Render();
@@ -852,10 +735,12 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
     if (show <= 3) depthMode = show;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        angle += 0.01;
+        setBias += 0.0001;
+        //angle += 0.01;
     //p1.move(0.01);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        angle -= 0.01;
+        setBias -= 0.0001;
+        //angle -= 0.01;
     //p1.move(-0.01);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cam.ProcessKeyboard(FORWARD, deltaTime);
@@ -868,7 +753,7 @@ void processInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cam.ProcessKeyboard(RIGHT, deltaTime);
-    //printVec3(cam.Position);
+
 
 
 

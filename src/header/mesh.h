@@ -51,7 +51,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader& shader)
+    int Draw(Shader& shader)
     {
         // bind appropriate textures
         unsigned int diffuseNr = 1;
@@ -86,6 +86,8 @@ public:
 
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
+
+        return indices.size();
     }
 
 private:
