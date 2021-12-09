@@ -36,9 +36,42 @@ public:
     Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
         loadModel(path);
+
+
     }
 
     // draws the model, and thus all its meshes
+
+    void setTexture(Shader shader) {
+        stbi_set_flip_vertically_on_load(true);
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        // set the texture wrapping/filtering options (on currently bound texture)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // load and generate the texture
+
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\res\\diffuse.jpg", &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            std::cout << "success" << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+        shader.use();
+        shader.setInt("texture_diffuse1", 6);
+        stbi_image_free(data);
+    }
     void Draw(Shader& shader)
     {
         int j = 0;
@@ -46,9 +79,19 @@ public:
         for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
   
-            //j += meshes[i].vertices.size();
-            
+            //j += meshes[i].vertices.size();   
         }
+    }
+    std::vector<float> getAllVertices() {
+        std::vector<float> re;
+        
+        for (unsigned int i = 0; i < meshes.size(); i++){
+            meshes[i].getAllVertices(re);
+            //re.reserve(re.size() + meshes[i].getAllVertices().size());
+            //re.insert(re.end(), meshes[i].getAllVertices().begin(), meshes[i].getAllVertices().end());
+            //re = 
+        }
+        return re;
     }
 
 private:
@@ -156,7 +199,6 @@ private:
         // diffuse: texture_diffuseN
         // specular: texture_specularN
         // normal: texture_normalN
-        std::cout << "nn";
         // 1. diffuse maps
         vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -171,7 +213,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        std::cout << vertices.size() << " " << indices.size() << std::endl;
+        //std::cout << vertices.size() << " " << indices.size() << std::endl;
         return Mesh(vertices, indices, textures);
     }
 

@@ -216,7 +216,7 @@ public:
         return ver;
      }
 
-    void draw(Shader shader,glm::mat4 proj,glm::mat4 view,glm::vec3 lightPos,Camera cam) {
+    void draw(Shader shader,glm::mat4 proj,glm::mat4 view,glm::vec3 lightPos,Camera cam,glm::vec3 color) {
 
         struct properties{
             glm::vec3 ambient = glm::vec3(0.5f,0.2f,0.1f);
@@ -251,7 +251,7 @@ public:
         shader.setVec3("viewPos", cam.Position);
         //shader.setMat4("model", model);
         shader.setVec3("lightPos", lightPos);
-        shader.setVec3("material.diffuse", material.diffuse);
+        shader.setVec3("material.diffuse", color);
         shader.setVec3("material.specular", material.specular);
         shader.setFloat("material.shininess", material.shininess);
 

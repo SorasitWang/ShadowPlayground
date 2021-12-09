@@ -66,6 +66,7 @@ void renderDepth(unsigned int depthFBO, unsigned int depthMap, Shader& depthShad
 void initPosMap(unsigned int& posFBO, unsigned int& posMap);
 void initDepthMap(unsigned int& depthFBO, unsigned int& depthMap);
 void drawFrame(Shader& shader, unsigned& VAO, glm::mat4 lightProjection, Plane p1, Plane p2);
+void addVertices(Shader& shader,Ball b);
 unsigned int loadTexture(const char* path);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -91,6 +92,115 @@ float angle = 0.0;
 int depthMode = 1;
 float setBias = 0.0f;
 unsigned int show = 1;
+
+float vertices[360]= {
+    // back face
+-0.3f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left
+  0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-right    
+  0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right              
+  0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right
+ -0.3f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-left
+ -0.3f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left           
+ // front face
+ -1.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
+  0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
+  0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-right        
+  0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
+ -1.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
+ -1.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-left        
+ // left face
+ -1.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
+ -1.5f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-left
+ -1.5f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-left       
+ -1.5f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-left
+ -1.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
+ -1.5f, -0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // bottom-right
+   // left face 2
+ -0.3f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-right
+ -0.3f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
+ -0.3f,  0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // top-left       
+ -0.3f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
+ -0.3f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-right
+ -0.3f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-right
+ // back face 2
+  -1.5f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-left
+  -0.3f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-right    
+  -0.3f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-right              
+  -0.3f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-right
+ -1.5f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-left
+ -1.5f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-left       
+ // right face
+  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left
+  0.5f,  0.5f, -0.5f,  1.0f, 0.0f,0.0f, // top-right      
+  0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right          
+  0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right
+  0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, // bottom-left
+  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left  
+
+  //top face
+   -0.3f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,// top-left
+  0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, // top-right
+  0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
+  0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+ -0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
+ -0.3f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  // top-left   
+
+  -1.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,// top-left
+  0.3f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f, // top-right
+  0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
+  0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+ -1.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
+ -1.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,  // top-left   
+
+  //bottomface
+  0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right 
+  0.5f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, // top-right
+  -0.3f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,// top-left
+  
+      
+  -0.3f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  // top-left   
+  -0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
+  0.5f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+ 
+ 
+  0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right  
+  0.3f,  -0.5f, -0.0f,  0.0f, 1.0f, 0.0f, // top-right
+  -1.5f, - 0.5f, -0.0f,  0.0f, 1.0f, 0.0f,// top-left
+
+   
+  -1.5f, -0.5f, -0.0f,  0.0f, 1.0f, 0.0f,  // top-left   
+  -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
+  0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+ 
+ 
+};;
+
+
+bool samePlane(float x1, float y1, float z1, float x2, float y2, float z2,
+    float x3, float y3, float z3, float x, float y, float z)
+{
+    float error = 0.0001;
+    float a1 = x2 - x1;
+    float b1 = y2 - y1;
+    float c1 = z2 - z1;
+    float a2 = x3 - x1;
+    float b2 = y3 - y1;
+    float c2 = z3 - z1;
+    float a = b1 * c2 - b2 * c1;
+    float b = a2 * c1 - a1 * c2;
+    float c = a1 * b2 - b1 * a2;
+    float d = (-a * x1 - b * y1 - c * z1);
+
+    // equation of plane is: a*x + b*y + c*z = 0 #
+
+    // checking if the 4th point satisfies
+    // the above equation
+    //if (a==0 && b==0 && c==0) return true;
+    if (abs(a * x + b * y + c * z + d) == 0.0)
+        return true;
+    return false;
+}
+
 int main()
 {
     const char* glsl_version = "#version 130";
@@ -127,7 +237,7 @@ int main()
 
 
 
-    Ball b = Ball();
+
     glEnable(GL_DEPTH_TEST);
     // Shader pointShader("point.vs", "ourShader.fs");
     Shader planeShader("src/plane/plane.vs", "src/plane/plane.fs");
@@ -173,65 +283,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    float vertices[] = {
-        // back face
-  -0.3f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left
-    0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-right    
-    0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right              
-    0.5f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-right
-   -0.3f,  0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // top-left
-   -0.3f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left           
-   // front face
-   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
-    0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
-    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-right        
-    0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-right
-   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f, // bottom-left
-   -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f, // top-left        
-   // left face
-   -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
-   -0.5f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-left
-   -0.5f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-left       
-   -0.5f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-left
-   -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // top-right
-   -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f,0.0f, // bottom-right
-     // left face 2
-   -0.3f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-right
-   -0.3f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
-   -0.3f,  0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // top-left       
-   -0.3f, -0.5f,  -0.5f,  -1.0f, 0.0f,0.0f, // bottom-left
-   -0.3f,  0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // top-right
-   -0.3f, -0.5f,  0.0f,  -1.0f, 0.0f,0.0f, // bottom-right
-   // back face 2
-    -0.5f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-left
-    -0.3f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-right    
-    -0.3f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-right              
-    -0.3f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-right
-   -0.5f,  0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // top-left
-   -0.5f, -0.5f, -0.0f,  0.0f, 0.0f,-1.0f, // bottom-left       
-   // right face
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left
-    0.5f,  0.5f, -0.5f,  1.0f, 0.0f,0.0f, // top-right      
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right          
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f, // bottom-right
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, // bottom-left
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f, // top-left  
-
-    //top face
-     -0.3f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,// top-left
-    0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, // top-right
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
-   -0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
-   -0.3f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  // top-left   
-
-    -0.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,// top-left
-    0.3f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f, // top-right
-    0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
-    0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
-   -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
-   -0.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,  // top-left   
-    };
+ 
 
     // first, configure the cube's VAO (and VBO)
 
@@ -254,6 +306,7 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    Ball b = Ball();
 
     p1.init(planeShader, -0.5f, true);
     p2.init(planeShader, -0.7f, true);
@@ -315,29 +368,37 @@ int main()
     simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
 
-    planeShader.use();
-    //p1 + p2
-    planeShader.setInt("xxx", 3);
-    planeShader.setBool("isModel", false);
-    planeShader.setInt("allObj[0].num", p1.ver.size() / 6);
-    planeShader.setInt("allObj[1].num", p1.ver.size() / 6);
-    planeShader.setInt("allObj[2].num", p1.ver.size() / 6);
-    planeShader.setInt("allObj[4].num", p1.ver.size() / 6);
-    for (int i = 0; i < p1.ver.size(); i += 6) {
-        planeShader.setVec3(std::string("allObj[0].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
-        planeShader.setVec3(std::string("allObj[1].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
-        planeShader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
-        planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+    glm::mat4 planeModel(1.0f);
+    planeModel = glm::translate(planeModel, glm::vec3(angle, 0.0, 0.0));
+    planeModel = glm::scale(planeModel, glm::vec3(0.2f, 2.0f, 9.0f));
+    planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
+    //planeModel = glm::rotate(planeModel, glm::radians(30.0f), glm::vec3(1.0, 1.0, 0.0));
+    //planeModel = glm::translate(planeModel, glm::vec3(0.8, 0.0, 0.0));
+    glm::mat4 pieceModel(1.0f);
+    pieceModel = glm::translate(pieceModel, glm::vec3(0.3, 0.015, -0.9));
+    pieceModel = glm::scale(pieceModel, glm::vec3(0.02f, 0.5f, 0.5f));
+    pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
-    }
+    glm::mat4 groundModel(1.0f);
+    groundModel = glm::translate(groundModel, glm::vec3(-0.3, -0.735, -0.7));
+    groundModel = glm::scale(groundModel, glm::vec3(2.5f, 1.0f, 2.0f));
+    groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
+
+    //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
+    glm::mat4 ballModel(1.0f);
+    ballModel = glm::translate(ballModel, glm::vec3(0.3, 0.0, 0.0));
+    ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    ballModel = glm::scale(ballModel, glm::vec3(0.1, 0.1, 0.1));
+
+    glm::mat4 boxModel = glm::mat4(1.0f);
    
-    planeShader.setInt("allObj[3].num", 6 * 8);
-    for (int i = 0; i < 6 * 8 * 6; i += 6) {
-        //planeShader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
-        planeShader.setVec3(std::string("allObj[3].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
-    }
+    
+
+
+    addVertices(planeShader,b);
+    addVertices(modelShader, b);
     //planeShader.setInt("allObj[4].num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
-    planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
+    /*planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
     int idx = 0,c=0;
     for (int i = 0; i < b.X_SEGMENTS * b.Y_SEGMENTS; i+=1) {
         for (int j = 0; j < 6; j++) {
@@ -349,36 +410,10 @@ int main()
             c += 1;
         }
 
-    }
-    std::cout << c << std::endl;
+    }*/
+  
 
-    glm::mat4 planeModel(1.0f);
-    planeModel = glm::translate(planeModel, glm::vec3(-0.6, 0.0, 0.0));
-    planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 2.0f));
-    planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-    //planeModel = glm::rotate(planeModel, glm::radians(30.0f), glm::vec3(1.0, 1.0, 0.0));
-    //planeModel = glm::translate(planeModel, glm::vec3(0.8, 0.0, 0.0));
-    glm::mat4 pieceModel(1.0f);
-    pieceModel = glm::translate(pieceModel, glm::vec3(0.0, 0.20, -0.5));
-    pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.5f, 0.5f));
-    pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-
-    glm::mat4 groundModel(1.0f);
-    groundModel = glm::translate(groundModel, glm::vec3(0.1, -0.2, 0.0));
-    groundModel = glm::scale(groundModel, glm::vec3(2.0f, 0.01f, 2.0f));
-    groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
-
-    //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
-    glm::mat4 ballModel(1.0f);
-    ballModel = glm::translate(ballModel, glm::vec3(0.5, 0.0, 0.0));
-    ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    ballModel = glm::scale(ballModel, glm::vec3(0.1, 0.1, 0.1));
-
-    glm::mat4 boxModel = glm::mat4(1.0f);
-    boxModel = glm::mat4(1.0f);
-    boxModel = glm::translate(boxModel, glm::vec3(-0.2, 0.0, 0.3));
-    boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
-
+   
     //sboxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -392,7 +427,11 @@ int main()
     modelShader.use();
     modelShader.setBool("isModel", true);
     
-    const char* showMode[] = { "Normal use bias" , "Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
+    const char* showMode[] = { "Normal use bias" , "Back face" ,"Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
+   
+    /*for (int i = 0; i < showV.size(); i += 3) {
+       std::cout << showV[i] << " " << showV[i+1] << " " << showV[i+2] << " " << std::endl;
+    }*/
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -418,9 +457,15 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
 
+        boxModel = glm::mat4(1.0f);
+        boxModel = glm::translate(boxModel, glm::vec3(-0.5, 0.0, 0.0));
+        boxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
 
 
-
+        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(angle, 0.0, 0.0));
+        planeModel = glm::scale(planeModel, glm::vec3(0.2f, 2.0f, 9.0f));
+        planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
 
         lightView = glm::lookAt(lightPos2, glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -449,12 +494,12 @@ int main()
         b.draw(simplePosShader);
         simplePosShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 48);
+        //glDrawArrays(GL_TRIANGLES, 0, 60);
 
         
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
 
         glActiveTexture(GL_TEXTURE4);
@@ -466,7 +511,7 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
      
 
@@ -510,7 +555,7 @@ int main()
      
         simpleDepthShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         //drawFrame(simpleDepthShader, lightCubeVAO, lightProjection, p1, p2);
         glActiveTexture(GL_TEXTURE1);
@@ -526,7 +571,7 @@ int main()
         simpleDepthShader.setInt("posMapNear", 4);
 
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
       
 
@@ -553,7 +598,7 @@ int main()
         simpleDepthShader.setBool("isSecond", true);
 
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
 
         simpleDepthShader.setMat4("model", planeModel);
@@ -567,7 +612,7 @@ int main()
 
         simpleDepthShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, depthMap3);
@@ -589,7 +634,7 @@ int main()
 
 
 
-        //glDisable(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
         //glCullFace(GL_FRONT);
 
         glm::mat4 view = cam.GetViewMatrix();
@@ -612,12 +657,12 @@ int main()
         planeShader.setMat4("allObj[1].model", pieceModel);
         planeShader.setMat4("allObj[2].model", groundModel);
         planeShader.setMat4("test.model", ballModel);
-        planeShader.setMat4("allObj[5].model", ballModel);
-        p1.draw(planeShader, proj, view, lightPos2, cam);
+        //planeShader.setMat4("allObj[4].model", ballModel);
+        p1.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.4, 0.8, 0.4));
         planeShader.setMat4("model", pieceModel);
-        p2.draw(planeShader, proj, view, lightPos2, cam);
+        p2.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.8, 0.4, 0.4));
         planeShader.setMat4("model", groundModel);
-        p3.draw(planeShader, proj, view, lightPos2, cam);
+        p3.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.4, 0.4, 0.8));
 
         modelShader.use();
         modelShader.setInt("numObj", numObj);
@@ -625,6 +670,12 @@ int main()
         modelShader.setFloat("setBias", setBias);
         modelShader.setBool("useNormal", true);
         modelShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
+        modelShader.setMat4("allObj[0].model", planeModel);
+        modelShader.setMat4("allObj[1].model", pieceModel);
+        modelShader.setMat4("allObj[2].model", groundModel);
+        modelShader.setMat4("allObj[3].model", boxModel);
+        modelShader.setMat4("test.model", ballModel);
+        modelShader.setBool("isModel", false);
 
         //plane
 
@@ -645,7 +696,7 @@ int main()
         planeShader.setMat4("modelObj", glm::mat4(0.0f));
         planeShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 48);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         //light source
         lightCubeShader.use();
@@ -676,7 +727,7 @@ int main()
         model = glm::scale(model, glm::vec3(0.8));
         shader.setMat4("model", model);
         glBindVertexArray(VAO1);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -733,10 +784,13 @@ void processInput(GLFWwindow* window)
         show = 5;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (show <= 3) depthMode = show;
+    if (show <= 4) depthMode = show;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         setBias += 0.0001;
-        //angle += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        angle += 0.005;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        angle -= 0.005;
     //p1.move(0.01);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         setBias -= 0.0001;
@@ -950,6 +1004,42 @@ void drawFrame(Shader& shader, unsigned& VAO, glm::mat4 lightProjection, Plane p
     model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
     shader.setMat4("model", model);
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 48);
+    glDrawArrays(GL_TRIANGLES, 0, 60);
 
+}
+
+void addVertices(Shader& shader,Ball b) {
+
+    shader.use();
+    //p1 + p2
+    shader.setInt("xxx", 3);
+    shader.setBool("isModel", false);
+    shader.setInt("allObj[0].num", p1.ver.size() / 6);
+    shader.setInt("allObj[1].num", p1.ver.size() / 6);
+    shader.setInt("allObj[2].num", p1.ver.size() / 6);
+
+    for (int i = 0; i < p1.ver.size(); i += 6) {
+        shader.setVec3(std::string("allObj[0].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        shader.setVec3(std::string("allObj[1].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        shader.setVec3(std::string("allObj[2].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+        // planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"), glm::vec3(p1.ver[i], p1.ver[i + 1], p1.ver[i + 2]));
+
+    }
+
+    shader.setInt("allObj[3].num", 6 * 8);
+    for (int i = 0; i < 6 * 8 * 6; i += 6) {
+        shader.setVec3(std::string("allObj[3].vertex[") + std::to_string(i / 6)
+            + std::string("]"), glm::vec3(vertices[i], vertices[i + 1], vertices[i + 2]));
+    }
+
+    auto modelV = b.getAllVertices();
+    std::cout <<"modelV" << modelV.size() << std::endl;
+    shader.setInt("test.num", modelV.size() / 3);
+
+    for (int i = 0; i < modelV.size(); i += 3) {
+        shader.setVec3(std::string("test.vertex[") + std::to_string(i / 3)
+            + std::string("]"), glm::vec3(modelV[i], modelV[i + 1], modelV[i + 2]));
+        //glm::vec4 tmp = ballModel * glm::vec4(modelV[i], modelV[i + 1], modelV[i + 2], 1.0);
+        //std::cout << modelV.size() << " " << tmp.x << " " << tmp.y << " " << tmp.z << " " << std::endl;
+    }
 }

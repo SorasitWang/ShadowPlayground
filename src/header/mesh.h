@@ -80,14 +80,35 @@ public:
         }
 
         // draw mesh
+        shader.use();
+        shader.setFloat("alpha", 1.0);
+        
+        
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        //glBindVertexArray(0);
+        shader.setFloat("alpha", 1.0);
+        glLineWidth(8.0f);
+        //glDrawArrays(GL_LINE_STRIP, 0, indices.size());
         glBindVertexArray(0);
-
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
 
         return indices.size();
+    }
+
+    void getAllVertices(std::vector<float> &re){
+        
+        for (int i = 0; i < indices.size(); i+=3) {
+            //std::cout << indices[i] <<" " << indices[i+1] << " " << indices[i+2] <<std::endl;
+        }
+        //std::cout << indices.size() << std::endl;
+        for (int i = 0; i < indices.size(); i++) {
+            re.push_back(vertices[i].Position.x);
+            re.push_back(vertices[i].Position.y);
+            re.push_back(vertices[i].Position.z);
+        }
+
     }
 
 private:

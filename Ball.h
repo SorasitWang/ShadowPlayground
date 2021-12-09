@@ -48,9 +48,9 @@ public:
 
 	void init(Shader shader) {
 		
-		
+		ourModel.setTexture(shader);
 		ourModel.Draw(shader);
-
+		
 		/*2-Calculate the vertices of the sphere*/
 		//Generate the vertices of the ball
 		for (int y = 0; y <= Y_SEGMENTS; y++)
@@ -159,10 +159,12 @@ public:
 	}*/
 	void draw(Shader shader) {
 		// initialize (if necessary)
+		//glDisable(GL_CULL_FACE);
 		glFrontFace(GL_CW);
 		shader.use();
 		ourModel.Draw(shader);
 		glFrontFace(GL_CCW);
+		//glEnable(GL_CULL_FACE);
 		/*glBindVertexArray(this->VAO);
 
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
@@ -172,7 +174,7 @@ public:
 
 	void draw(Shader shader, glm::mat4 projection, glm::mat4 view, glm::vec3 lightPos,Camera cam) {
 		
-		glFrontFace(GL_CW);
+		glDisable(GL_CULL_FACE);
 		struct properties {
 			glm::vec3 ambient = glm::vec3(0.5f, 0.2f, 0.1f);
 			glm::vec3 specular = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -210,12 +212,16 @@ public:
 		shader.setFloat("alpha", 1.0f);
 	
 		ourModel.Draw(shader);
-		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
 		/*glBindVertexArray(this->VAO);
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 		shader.setBool("useNormal", true);*/
 		
+	}
+
+	std::vector<float> getAllVertices() {
+		return ourModel.getAllVertices();
 	}
 
 

@@ -9,6 +9,10 @@ in vec4 glPos;
 uniform bool isSecond;
 uniform sampler2D posMapNear;
 
+void mai()
+{
+// gl_FragDepth
+}
 void main()
 {        
 	//if (setup==true){
@@ -22,7 +26,7 @@ void main()
     float offset = 0.05;
     float plus = 1.5;
 	gl_FragDepth = gl_FragCoord.z;
-	
+	FragColor = vec4(gl_FragCoord.z,0,0,1.0);
 	if (isSecond){
 		vec3 mapNear = texture(posMapNear,pos.xy).xyz;
 		//FragColor = vec4(1.0,0.0,0.0,1.0);
@@ -30,17 +34,10 @@ void main()
 		&& (abs(rat*mapNear.z-plus - world.z) <= offset))  ){
 		//if (world.x < 0.5)
 			gl_FragDepth = 1.0;
-			FragColor = vec4(0.0,1.0,0,1.0);
-		}
-
+			}
+			}
 		
-		else{
-			FragColor = vec4(gl_FragCoord.z,0,0,1.0);
-		}
-		
-	}
-	else 
-	FragColor = vec4(gl_FragCoord.z,0,0,1.0);
+	
 		//FragColor = vec4(texture(shadowMapNear, pos.xy).xyz,1.0);
 	//FragColor = vec4(gl_FragCoord.z,world.xz,world.y+1.0);
 	//FragColor = vec4(world.xyz,1.0);
