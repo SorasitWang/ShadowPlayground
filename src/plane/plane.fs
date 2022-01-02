@@ -11,6 +11,7 @@ struct Properties {
     float linear;
     float constant;
     float quadratic;
+
 }; 
 
 struct Obj { 
@@ -21,16 +22,19 @@ struct Obj {
 }; 
 
 in VS_OUT {
+    
     vec3 FragPos;
     vec3 Normal;
     vec2 TexCoords;
     vec4 FragPosLightSpace;
     vec4 FragPosLightSpace2;
+    vec4 Norm;
 } fs_in;
 
 #define NR 4
 uniform vec3 lightPos;
 uniform vec3 lightPos2;
+uniform vec3 lightDirection;
 uniform vec3 viewPos;
 uniform Properties material,light;
 uniform sampler2D shadowMapFar;
@@ -38,6 +42,10 @@ uniform sampler2D shadowMapBack;
 uniform sampler2D shadowMapNear;
 uniform sampler2D posMapFar;
 uniform sampler2D posMapNear;
+uniform sampler2D posMapSec;
+uniform sampler2D normMap;
+uniform sampler2D normMapBack;
+uniform sampler2D normMapFar;
 uniform float far_plane;
 uniform float alpha;
 uniform bool drawShadow;
@@ -118,6 +126,15 @@ bool checkInRange(vec3 a,vec3 b,vec3 p)
 
 }
 
+//1 : right , -1 : left , 0 : center
+int checkSide(vec3 testPos,vec3 anchor,vec3 v){
+    
+    vec3 tmp = testPos - anchor;
+    if (sign(tmp) == sign(v)) return 1;
+    if (sign(tmp) == -1*sign(v)) return -1;
+    return 0;
+    //return sign(sign(tmp.x) + sign(tmp.y) + sign(tmp.z));
+}
 int CalculateProbSameTexture(vec3 now,vec3 near)
 {
     //return 0;
@@ -168,24 +185,30 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     vec4 mapBack = texture(shadowMapBack, projCoords.xy);
     vec4 mapFar= texture(shadowMapFar, projCoords.xy);
     vec4 mapNear = texture(shadowMapNear, projCoords.xy);
-    vec4 posFar = texture(posMapFar, projCoords.xy);
+    vec4 posBack = texture(posMapFar, projCoords.xy);
+    vec4 normFront = texture(normMap, projCoords.xy);
+    vec4 normBack = texture(normMapBack, projCoords.xy);
+    vec4 normFar = texture(normMapFar,projCoords.xy);
     vec4 posNear = texture(posMapNear, projCoords.xy);
+    vec4 posSec = texture(posMapSec, projCoords.xy);
     float closestDepth = 0.0;
     float bias = 0.0;
-     float rat = 5.0;
+     float rat = 10.0;
     float offset = 0.01;
     float plus = 1.5;
+    float w = 1.0;
     float currentDepth = projCoords.z;
     if (depthMode == 1){ //normal
         closestDepth= mapNear.r;
-        bias = setBias;
+        bias = 0.005;//setBias;
     }
     else if (depthMode == 2){ //normal
-        closestDepth = (0.0*mapNear.r + 1.0*mapBack.r )/1.0;
+       closestDepth = (0.0*mapNear.r + 1.0*mapBack.r )/1.0;
     }
     else if (depthMode == 3){
 
-        bias = abs(1.0*mapBack.r - 1.0*mapNear.r )/2.0;
+        bias =  min(abs(1.0*mapBack.r - 1.0*mapNear.r )/2.0,0.005);    
+    //bias = abs(1.0*mapBack.r - 1.0*mapNear.r )/2.0;
         closestDepth =mapNear.r;
 
         vec2 texelSize = 1.0 / textureSize(shadowMapBack, 0);
@@ -199,9 +222,154 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
             }    
         }
     }
-    else {
-        bias = min(abs(1.0*mapNear.r - 1.0*mapFar.r )/2.0,0.005);
+   else if (depthMode >= 4) {
+    //max(mapFar.r,mapBack.r )
+      bias = min(abs(1.0*mapNear.r - 1.0*mapFar.r )/2.0,0.005);
         closestDepth =mapNear.r;
+    }
+    if (depthMode == 6){
+        bool b =false, f =false;
+        //vec3 lightRay = lightDirection;
+        vec3 lightRay = posBack.xyz - posNear.xyz;
+         vec3 n = normalize(vec3(normFront.x,normFront.y,normFront.z));
+        vec3 n2 = normalize(vec3(normBack.x,normBack.y,normBack.z));
+        //back
+         vec3 frontPos = posBack.xyz + dot(-lightDirection,n2) / dot(n2,n2) * (n2);
+         vec3 testPos = posBack.xyz + dot(fs_in.FragPos-posBack.xyz,n2) / dot(n2,n2) * (n2);
+
+
+         vec3 norm = normalize(fs_in.Normal);
+    vec3 lightDir = normalize(-posBack.xyz + posNear.xyz);
+    float diff = max(dot(norm, lightDir), 0.0);
+        if (dot(norm, lightDir)<=0.001) return 1.0;
+        if ( (dot(lightRay,fs_in.Norm.xyz) /  (length(lightRay)*length(fs_in.Norm.xyz) )) >= 0.001){
+          //  return 1.0;
+        }
+        //if (bias < 0.005){
+         if ( abs((dot(lightRay,normFront.xyz) /  (length(lightRay)*length(normFront.xyz) ))) <= 0.01){
+            //return 0.5;
+        }
+         if ( abs((dot(lightRay,normBack.xyz) /  (length(lightRay)*length(normBack.xyz) ))) <= 0.01){
+            //return 0.5;
+        }
+        //if (abs(dot(normFront.xyz,fs_in.Norm.xyz))  <= 0.001) return 1.0;
+       
+         if (sign(frontPos-posBack.xyz) == -1*sign(testPos-posBack.xyz))
+            b = true;
+         vec3 backPos = posNear.xyz + dot(lightDirection.xyz,n) / dot(n,n) * (n);
+         testPos = posNear.xyz + dot(fs_in.FragPos-posNear.xyz,n) / dot(n,n) * (n);
+         if (sign(backPos-posNear.xyz) == sign(testPos-posNear.xyz))
+            f = true;
+
+         if (b && f) return 1.0;
+         else if (b) return 1.0;
+         //else if (f) return 0.5;
+        return 0.0;
+        //}
+
+    }
+    else if (depthMode == 7){
+
+
+     vec3 lightRay = normalize(lightDirection);
+     vec3 testPos = dot(fs_in.FragPos,lightRay)*lightRay;
+     vec3 biasPos = posNear.xyz + lightRay*bias;
+     biasPos = dot(biasPos,lightRay)*lightRay;
+     if (sign(testPos - biasPos) == sign(lightRay) ) return 1.0;
+     return 0.0;
+
+
+
+
+
+
+        //new
+        float bias2 = min(abs(1.0*mapNear.r - 1.0*mapFar.r )/2.0,0.005);
+        vec3 nFront = normalize(normFront.xyz);
+        vec3 nSec = normalize(normFar.xyz);
+        vec3 check1 = posNear.xyz + dot(fs_in.FragPos - posNear.xyz,nFront) / dot(nFront,nFront) * (nFront);
+        biasPos = posNear.xyz + (-nFront)*bias2;
+        int biasSide = checkSide(biasPos,posNear.xyz,nFront);
+        int testSide = checkSide(check1 ,biasPos,nFront);
+        
+
+        //if (biasSide == testSide && testSide != 0){
+            vec3 check2 =posSec.xyz + dot(fs_in.FragPos - posSec.xyz,nSec) / dot(nSec,nSec) * (nSec);
+            biasPos = posSec.xyz+ dot(nSec,nSec)*(nSec)*0.005;//length(posNear.xyz - posSec.xyz)/2.0;
+            biasSide = checkSide(biasPos,posSec.xyz,nSec);
+            testSide = checkSide(check2 ,posSec.xyz,nSec);
+            
+            if (biasPos.x < check2.x) //(biasSide != testSide)
+            return 1.0;
+            //return 0.5;
+        //}
+        return 0.0;
+        
+       
+
+
+
+
+        return 0.0;
+
+        // old 
+         // from light source to object
+         vec3 n = normalize(vec3(normFar.x,normFar.y,normFar.z));
+         if ( (dot(lightRay,fs_in.Norm.xyz) /  (length(lightRay)*length(fs_in.Norm.xyz) )) >= 0.001){
+           return 1.0;
+        }
+        //back
+        float len = max(0.005,abs(mapFar.r - mapNear.r)/2.0) ;
+       // if (len < 0.005){
+        //len = 0.08;
+       // vec3 testPos = (posNear.xyz  + posSec.xyz) /2.0;// lightRay*len;
+        testPos = posNear.xyz+ lightRay*len;
+        vec3 frontPos = testPos + dot(-lightRay,n) / dot(n,n) * (n);
+        vec3 nowPos = testPos+ dot(fs_in.FragPos-testPos,n) / dot(n,n) * (n);
+        
+        if  ( sign(dot(-lightRay,n)) != sign(dot(fs_in.FragPos-testPos,n))){
+         //if (sign(frontPos - testPos) == sign(nowPos - testPos))
+            n = normalize(vec3(normFront.x,normFront.y,normFront.z));
+            if (sign(dot(-lightRay,n)) != sign(dot(fs_in.FragPos-testPos,n)))
+            //return 1.0;
+            return 1.0;
+            //return 0.5;
+        }
+            return 0.0;
+        //}
+
+    }
+    else if (depthMode == 5){ //normal
+       //shadow = length(vec3((rat*posBack.x-plus)-fs_in.FragPos.x ,(rat*posBack.y-plus)-fs_in.FragPos.y ,(rat*posBack.z-plus)-fs_in.FragPos.z)) 
+       //>  length(vec3((rat*posNear.x-plus)-fs_in.FragPos.x ,(rat*posNear.y-plus)-fs_in.FragPos.y ,(rat*posNear.z-plus)-fs_in.FragPos.z)) ? 0.0:1.0;
+
+        //shadow = abs(currentDepth-mapBack.r) >  abs(currentDepth-mapNear.r) ? 0.0:1.0;
+
+       //if (bias < 0.002){
+
+
+        float a = normFront.x;
+        float b = normFront.y;
+        float c = normFront.z;
+        vec3 n = normalize(vec3(a,b,c));
+        vec3 n2 = normalize(vec3(normBack.x,normBack.y,normBack.z));
+        vec3 lightRay = normalize(posBack.xyz - posNear.xyz);
+        //if (dot(lightRay,normalize(fs_in.Normal)) > 0)
+        //vec3 lightRay = lightDirection;
+        if ( (dot(lightRay,fs_in.Norm.xyz) /  (length(lightRay)*length(fs_in.Norm.xyz) )) > 0.001){
+            return 1.0;
+        }
+        if (false ){
+            n = normalize(fs_in.Normal);
+            //float d = -(fs_in.FragPos.x*a +fs_in.FragPos.y*b +fs_in.FragPos.z*c);
+            vec3 posBackAdapt = posBack.xyz;
+            vec3 posFrontAdapt = posNear.xyz;
+
+            //vec3 newPos = posBackAdapt - (n*posBackAdapt + vec3(d))*n;
+            vec3 newPos = posFrontAdapt + min(0.005,dot(posBackAdapt-posFrontAdapt,-n) / dot(-n,-n)) * (-n);
+            return length(posFrontAdapt-0.005*abs(n) -fs_in.FragPos)  > length(posFrontAdapt-fs_in.FragPos) ? 0.0:1.0;
+        }
+       //}
     }
     //if (abs(dot(mapNear.xyz-fs_in.FragPos,fs_in.Normal)) <= 0.03)
       //  return 0.0;
@@ -212,33 +380,56 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     //vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     //bias = autoBias;
     // check whether current frag pos is in shadow
+    // if (depthMode == 2)
+       // bias =0.0;
+    float shadow = currentDepth - bias  >= closestDepth  ? 1.0 : 0.0;
+   
     
-    float shadow = currentDepth - bias  > closestDepth  ? 1.0 : 0.0;
+
+    //find plane eq
+    
+
+
+
+
+
+
+
+
+
+
+    //shadow = abs(currentDepth-mapBack.r) >  abs(currentDepth-mapNear.r) ? 0.0:1.0;
     //if(projCoords.z > 5.0)
       //  return 0.0;
     posNear.xyz = rat*posNear.xyz - plus;
     //if (length(posNear.xyz-fs_in.FragPos) < 0.1)
       //  return CalculateProbSameTexture(fs_in.FragPos,posNear.xyz);//posNear.xyz
     // PCF
-    //return 1.0;
     return shadow;
-    shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMapFar, 0);
-    for(int x = -1; x <= 1; ++x)
-    {
-        for(int y = -1; y <= 1; ++y)
+
+
+        shadow = 0.0;
+        vec2 texelSize = 1.0 / textureSize(shadowMapNear, 0);
+        for(int x = -1; x <= 1; ++x)
         {
-            float pcfDepth = texture(mapShadowFar, projCoords.xy + vec2(x, y) * texelSize).a; 
-            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
-        }    
-    }
-    shadow /= 9.0;
+            for(int y = -1; y <= 1; ++y)
+            {
+                float pcfDepth = texture(shadowMapNear, projCoords.xy + vec2(x, y) * texelSize).r; 
+                shadow += currentDepth - 0.01> pcfDepth  ? 1.0 : 0.0;        
+            }    
+        }
+        shadow /= 9.0;
     
+
+     
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
     if(projCoords.z > 10.0)
         shadow = 0.0;
         
     return shadow;
+    
+
+    
 }
 
 
@@ -251,18 +442,46 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
     projCoords = projCoords * 0.5 + 0.5;
     vec4 mapNear = texture(posMapNear, projCoords.xy);
     vec4 mapFar= texture(shadowMapFar, projCoords.xy);
+    vec4 posFar = texture(posMapFar, projCoords.xy);
+    vec4 posSec = texture(posMapSec, projCoords.xy);
+    vec4 mapBack = texture(shadowMapBack, projCoords.xy);
     vec4 depthNear = texture(shadowMapNear, projCoords.xy);
+    vec4 normFront = texture(normMap, projCoords.xy);
+    vec4 normBack = texture(normMapBack, projCoords.xy);
+     vec4 normFar = texture(normMapFar,projCoords.xy);
+    //vec4 posNear = texture(posMapNear, projCoords.xy);
      float currentDepth = projCoords.z;
-    float rat = 5.0;
-    float offset = 0.01;
+    float rat = 10.0;
+    float offset = 0.001;
     float plus = 1.5;
-    if ((abs(rat*mapNear.x-plus - fs_in.FragPos.x) <= offset) && (abs(rat*mapNear.y-plus - fs_in.FragPos.y) <=offset)  && (abs(rat*mapNear.z-plus - fs_in.FragPos.z) <= offset)  ){
-    //if (abs(depthNear.x-currentDepth) < 0.001){
-        //return vec3(1.0,0.0,0.0);
+
+    float a = normFront.x;
+        float b = normFront.y;
+        float c = normFront.z;
+        vec3 n = vec3(a,b,c);
+        vec3 n3 = normalize(vec3(normFar.x,normFar.y,normFar.z));
+        
+     //float len = min(0.005 , abs(mapFar.r - mapNear.r)/2.0 );
+     //vec3 testPos = posNear.xyz + normalize(lightDirection)*len;
+
+    if ((abs(mapNear.x - fs_in.FragPos.x) <= offset) && (abs(mapNear.y - fs_in.FragPos.y) <=offset)  && (abs(mapNear.z- fs_in.FragPos.z) <= offset)  ){
+    //if (abs(currentDepth-mapBack.x) < 0.0001){
+      return vec3(0.7,0.0,0.0);
     }
+
+    if ((abs(posFar.x - fs_in.FragPos.x) <= offset) && (abs(posFar.y - fs_in.FragPos.y) <=offset)  && (abs(posFar.z- fs_in.FragPos.z) <= offset)  ){
+    //if (abs(currentDepth-mapBack.x) < 0.0001){
+      return vec3(0.0,0.0,0.7);
+    }
+
+    if ((abs(posSec.x - fs_in.FragPos.x) <= offset) && (abs(posSec.y - fs_in.FragPos.y) <=offset)  && (abs(posSec.z- fs_in.FragPos.z) <= offset)  ){
+    //if (abs(currentDepth-mapBack.x) < 0.0001){
+      return vec3(0.0,0.7,0.0);
+    }
+
    
-    //if( length(projCoords.z-depthNear.r) < 0.001)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
-      //  return vec3(1.0,0.0,0.0);
+   // if( length(projCoords.z-depthNear.r) < 0.0001)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
+        //return vec3(1.0,0.0,0.0);
     //return vec3(fs_in.FragPos.x) ;//vec3(projCoords.z,fs_in.FragPos.xz);
     //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
     
@@ -304,10 +523,17 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
    // if( length(fs_in.FragPos.xyz-posNear.xyz) < 0.001)// && abs(fs_in.FragPos.z-mapNear.z) < 0.001)
     //    return vec3(1.0,0.0,0.0);
     ///shadow = 0.0;//ShadowCalculation(fragPosLightSpace,mapShadowFar,mapShadowNear,bias,lightP);  // PointShadowCalculation(fs_in.FragPos);
+    
+    
+    
+    
     vec3 result;
-         result = ambient+ ((1.0-shadow)* (diffuse + specular));
+         //result = ambient+ ((1.0-shadow)* (diffuse + specular));
          result = (1.0-shadow)*material.diffuse;
-    if (isModel) result = (1.0-shadow)*texture(texture_diffuse1,fs_in.TexCoords).xyz;
+         //result = (1.0-shadow*0.5)*normalize(fs_in.Norm.xyz);
+         //result = (1.0-shadow*0.5)*normalize(normFront.xyz);
+         //result = (1.0-shadow/2.0)*vec3(abs(n3.x),abs(n3.y),abs(n3.z));
+    if (isModel) result = (1.0-shadow/2.0)*texture(texture_diffuse1,fs_in.TexCoords).xyz;
 
    // mapNear.x = rat*mapNear.x-plus;
    // mapNear.y = rat*mapNear.y-plus;

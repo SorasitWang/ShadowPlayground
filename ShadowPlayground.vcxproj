@@ -163,6 +163,8 @@
     <None Include="src\shader\lightcube.vs" />
     <None Include="src\shader\model.fs" />
     <None Include="src\shader\model.vs" />
+    <None Include="src\shader\normal.fs" />
+    <None Include="src\shader\normal.vs" />
     <None Include="src\shader\ourshader.fs" />
     <None Include="src\shader\ourShader.vs" />
     <None Include="src\shader\pos.fs" />

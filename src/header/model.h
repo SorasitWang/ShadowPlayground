@@ -46,7 +46,7 @@ public:
         stbi_set_flip_vertically_on_load(true);
         unsigned int texture;
         glGenTextures(1, &texture);
-        glActiveTexture(GL_TEXTURE6);
+        glActiveTexture(GL_TEXTURE10);
         glBindTexture(GL_TEXTURE_2D, texture);
         // set the texture wrapping/filtering options (on currently bound texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -69,7 +69,7 @@ public:
             std::cout << "Failed to load texture" << std::endl;
         }
         shader.use();
-        shader.setInt("texture_diffuse1", 6);
+        shader.setInt("texture_diffuse1", 8);
         stbi_image_free(data);
     }
     void Draw(Shader& shader)

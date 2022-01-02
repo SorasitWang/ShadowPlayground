@@ -184,7 +184,7 @@ public:
 		} property, material;
 		property.ambient = glm::vec3(0.9f, 0.9f, 0.9f);
 		material.ambient = glm::vec3(0.8, 0.5, 0.3);
-		material.diffuse = glm::vec3(0.4, 0.8, 0.4);
+		material.diffuse = glm::vec3(0.6, 0.2, 0.2);
 		shader.use();
 		shader.setBool("useNormal", true);
 		
@@ -209,7 +209,7 @@ public:
 		shader.setFloat("light.linear", 0.09f);
 		shader.setFloat("light.quadratic", 0.032f);
 
-		shader.setFloat("alpha", 1.0f);
+		shader.setFloat("alpha", 0.0f);
 	
 		ourModel.Draw(shader);
 		glEnable(GL_CULL_FACE);

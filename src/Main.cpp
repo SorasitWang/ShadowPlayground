@@ -74,11 +74,12 @@ const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 const float SIZE = 6;
 const int numObj = 3;
 glm::vec3 lightPos(1.0f, 1.6f, 1.0f);
-glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
+glm::vec3 lightPos2(1.5f, 0.1f, 0.5f);
+glm::vec3 lightLookAt = glm::vec3(0.0f,0.0,0.0);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-float x, y;
+float x, y,yy=-0.16;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
@@ -147,30 +148,35 @@ float vertices[360]= {
 
   -1.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,// top-left
   0.3f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f, // top-right
-  0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right                 
+  0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right    
+
   0.3f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
  -1.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
  -1.5f,  0.5f, -0.0f,  0.0f, 1.0f, 0.0f,  // top-left   
 
   //bottomface
-  0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right 
-  0.5f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, // top-right
-  -0.3f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,// top-left
+  0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right 
+  0.5f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, // top-right
+  -0.3f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,// top-left
   
       
-  -0.3f,  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  // top-left   
-  -0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
-  0.5f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+  -0.3f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,  // top-left   
+  -0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-left  
+  0.5f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right
  
  
-  0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right  
-  0.3f,  -0.5f, -0.0f,  0.0f, 1.0f, 0.0f, // top-right
-  -1.5f, - 0.5f, -0.0f,  0.0f, 1.0f, 0.0f,// top-left
+  0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right  
+  0.3f,  -0.5f, -0.0f,  0.0f, -1.0f, 0.0f, // top-right
+  -1.5f, - 0.5f, -0.0f,  0.0f, -1.0f, 0.0f,// top-left
 
+
+  -1.5f, -0.5f, -0.0f,  0.0f, -1.0f, 0.0f,  // top-left   
+  -1.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-left  
+   0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right
    
-  -1.5f, -0.5f, -0.0f,  0.0f, 1.0f, 0.0f,  // top-left   
-  -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-left  
-  0.3f,  -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // bottom-right
+  
+  
+  
  
  
 };;
@@ -247,6 +253,7 @@ int main()
     Shader shader("src/shader/texture.vs", "src/shader/texture.fs");
     Shader modelShader("src/shader/model.vs", "src/plane/plane.fs");
     Shader simplePosShader("src/shader/pos.vs", "src/shader/pos.fs");
+    Shader normShader("src/shader/normal.vs", "src/shader/normal.fs");
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices1[] = {
@@ -315,8 +322,8 @@ int main()
     // s.init(pointShader);
 
     unsigned int depthMapFBO, depthMap, depthMapFBO2, depthMap2, depthMapFBO3, depthMap3;
-    unsigned int posMapFBO, posMap, posMapFBO2, posMap2;
-
+    unsigned int posMapFBO, posMap, posMapFBO2, posMap2, posMapFBO3, posMap3;
+    unsigned int normMapFBO, normMap, normMapFBO2, normMap2, normMapFBO3, normMap3;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth cubemap texture
 
@@ -327,7 +334,11 @@ int main()
 
     initPosMap(posMapFBO, posMap);
     initPosMap(posMapFBO2, posMap2);
+    initPosMap(posMapFBO3, posMap3);
 
+    initPosMap(normMapFBO, normMap);
+    initPosMap(normMapFBO2, normMap2);
+    initPosMap(normMapFBO3, normMap3);
     planeShader.use();
 
     planeShader.setInt("shadowMapFar", 3);
@@ -335,6 +346,12 @@ int main()
     planeShader.setInt("shadowMapNear", 1);
     planeShader.setInt("posMapFar", 5);
     planeShader.setInt("posMapNear", 4);
+    planeShader.setInt("posMapSec", 9);
+    planeShader.setInt("normMap", 6);
+    planeShader.setInt("normMapBack", 7);
+    planeShader.setInt("normMapFar", 8);
+
+
     simpleDepthShader.use();
     simpleDepthShader.setInt("shadowMapNear", 1);
     modelShader.use();
@@ -344,6 +361,7 @@ int main()
     modelShader.setInt("shadowMapNear", 1);
     modelShader.setInt("posMapFar", 5);
     modelShader.setInt("posMapNear", 4);
+
     //star.init(rockShader, wall);
 
     glEnable(GL_BLEND);
@@ -355,7 +373,7 @@ int main()
     glFrontFace(GL_CCW);
 
 
-    float orth = 2.0f;
+    float orth = 2.5f;
     float near_plane = 0.1f;
     float far_plane = 15.0f;
     glm::mat4 lightProjection, lightView;
@@ -367,36 +385,40 @@ int main()
     simpleDepthShader.use();
     simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-
+    glm::mat4 planeRotation, pieceRotation, groundRotation, ballRotation, boxRotation;
     glm::mat4 planeModel(1.0f);
-    planeModel = glm::translate(planeModel, glm::vec3(angle, 0.0, 0.0));
-    planeModel = glm::scale(planeModel, glm::vec3(0.2f, 2.0f, 9.0f));
+    planeModel = glm::translate(planeModel, glm::vec3(-1.00, 0.0, -0.3));
+    planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 4.0f));
+    planeRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
     planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
     //planeModel = glm::rotate(planeModel, glm::radians(30.0f), glm::vec3(1.0, 1.0, 0.0));
     //planeModel = glm::translate(planeModel, glm::vec3(0.8, 0.0, 0.0));
     glm::mat4 pieceModel(1.0f);
-    pieceModel = glm::translate(pieceModel, glm::vec3(0.3, 0.015, -0.9));
-    pieceModel = glm::scale(pieceModel, glm::vec3(0.02f, 0.5f, 0.5f));
+    pieceModel = glm::translate(pieceModel, glm::vec3(-1.6, -0.015, -0.9));
+    pieceModel = glm::scale(pieceModel, glm::vec3(0.002f, 0.5f, 0.5f));
+    pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
     pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
     glm::mat4 groundModel(1.0f);
-    groundModel = glm::translate(groundModel, glm::vec3(-0.3, -0.735, -0.7));
-    groundModel = glm::scale(groundModel, glm::vec3(2.5f, 1.0f, 2.0f));
+    groundModel = glm::translate(groundModel, glm::vec3(-0.096, -0.735, -0.3));
+    groundModel = glm::scale(groundModel, glm::vec3(2.0f, 1.0f, 4.0));
+    groundRotation = glm::rotate(glm::mat4(1.0f), glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
     groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
 
     //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
     glm::mat4 ballModel(1.0f);
     ballModel = glm::translate(ballModel, glm::vec3(0.3, 0.0, 0.0));
     ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    ballModel = glm::scale(ballModel, glm::vec3(0.1, 0.1, 0.1));
+    ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
     glm::mat4 boxModel = glm::mat4(1.0f);
-   
+    boxRotation = glm::mat4(1.0f);
     
 
 
-    addVertices(planeShader,b);
-    addVertices(modelShader, b);
+   // addVertices(planeShader,b);
+    //addVertices(modelShader, b);
     //planeShader.setInt("allObj[4].num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
     /*planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
     int idx = 0,c=0;
@@ -457,21 +479,33 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
 
-        boxModel = glm::mat4(1.0f);
-        boxModel = glm::translate(boxModel, glm::vec3(-0.5, 0.0, 0.0));
-        boxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-        boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.9f)); // a smaller cube
+        ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, 0.0, -0.0));
+        ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
 
-        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(angle, 0.0, 0.0));
-        planeModel = glm::scale(planeModel, glm::vec3(0.2f, 2.0f, 9.0f));
+        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.10+yy, 0.0, -0.3));
+        planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 4.0f));
+        planeRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
 
-        lightView = glm::lookAt(lightPos2, glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+        boxModel = glm::mat4(1.0f);
+        boxModel = glm::translate(boxModel, glm::vec3(-0.3, -0.05, angle));
+        boxModel = glm::rotate(boxModel, glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.4f)); // a smaller cube
+        boxRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60+angle, yy, -0.9));
+        pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.002f, 0.5f));
+        pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
+        pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
+        
+        lightView = glm::lookAt(lightPos2, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
         lightSpaceMatrix2 = lightProjection * lightView;
-
-
+        glm::vec3 lightDirection = glm::vec3(lightLookAt - lightPos2);
+        
 
         //--------------------- pos ---------------------------------------------//
         glEnable(GL_CULL_FACE);
@@ -484,6 +518,7 @@ int main()
        
 
         simplePosShader.setMat4("model", planeModel);
+        simplePosShader.setBool("isSecond", false);
         //simpleDepthShader.setBool("isSecond", true);
         p1.draw(simplePosShader);
         simplePosShader.setMat4("model", pieceModel);
@@ -494,16 +529,52 @@ int main()
         b.draw(simplePosShader);
         simplePosShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 60);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 60);
+        //glDrawArrays(GL_TRIANGLES, 0, 60);
 
 
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, posMap);
+
+        //------//
+        glBindFramebuffer(GL_FRAMEBUFFER, posMapFBO3);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        simplePosShader.use();
+        simplePosShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
+
+
+        simplePosShader.setMat4("model", planeModel);
+        simplePosShader.setBool("isSecond", true);
+        simplePosShader.setInt("posMapNear", 4);
+        //simpleDepthShader.setBool("isSecond", true);
+        p1.draw(simplePosShader);
+        simplePosShader.setMat4("model", pieceModel);
+        p2.draw(simplePosShader);
+        simplePosShader.setMat4("model", groundModel);
+        p3.draw(simplePosShader);
+        simplePosShader.setMat4("model", ballModel);
+        b.draw(simplePosShader);
+        simplePosShader.setMat4("model", boxModel);
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
+
+
+        //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glBindVertexArray(lightCubeVAO);
+        //glDrawArrays(GL_TRIANGLES, 0, 60);
+
+
+        glActiveTexture(GL_TEXTURE9);
+        glBindTexture(GL_TEXTURE_2D, posMap3);
+
+
+
+
+
 
         glBindFramebuffer(GL_FRAMEBUFFER, posMapFBO2);
         glEnable(GL_DEPTH_TEST);
@@ -619,11 +690,120 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
+        
+
+
+
+
+        //--------------------- normal ---------------------------------------------//
+
+        glBindFramebuffer(GL_FRAMEBUFFER, normMapFBO);
+        glCullFace(GL_FRONT);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+        
+        normShader.use();
+        normShader.setInt("posMapNear", 4);
+        normShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
+        normShader.setBool("isSecond", false);
+        
+        normShader.setMat4("model", planeModel);
+        normShader.setMat4("rotation", planeRotation);
+        p1.draw(normShader);
+        normShader.setMat4("model", pieceModel);
+        normShader.setMat4("rotation", pieceRotation);
+        p2.draw(normShader);
+        normShader.setMat4("model", groundModel);
+        normShader.setMat4("rotation", groundRotation);
+        p3.draw(normShader);
+        normShader.setMat4("model", ballModel);
+        normShader.setMat4("rotation", ballRotation);
+        b.draw(normShader);
+
+        normShader.setMat4("model", boxModel);
+        normShader.setMat4("rotation", boxRotation);
+        
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
+
+        //drawFrame(simpleDepthShader, lightCubeVAO, lightProjection, p1, p2);
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, normMap);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        //far normal
+        glBindFramebuffer(GL_FRAMEBUFFER, normMapFBO3);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+
+        normShader.use();
+        normShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
+        normShader.setBool("isSecond", true);
+
+        normShader.setMat4("model", planeModel);
+        normShader.setMat4("rotation", planeRotation);
+        p1.draw(normShader);
+        normShader.setMat4("model", pieceModel);
+        normShader.setMat4("rotation", pieceRotation);
+        p2.draw(normShader);
+        normShader.setMat4("model", groundModel);
+        normShader.setMat4("rotation", groundRotation);
+        p3.draw(normShader);
+        normShader.setMat4("model", ballModel);
+        normShader.setMat4("rotation", ballRotation);
+        b.draw(normShader);
+
+        normShader.setMat4("model", boxModel);
+        normShader.setMat4("rotation", boxRotation);
+
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
+
+        //drawFrame(simpleDepthShader, lightCubeVAO, lightProjection, p1, p2);
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, normMap3);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        //back normal
+
+        glBindFramebuffer(GL_FRAMEBUFFER, normMapFBO2);
+        glCullFace(GL_BACK);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+        normShader.setMat4("model", planeModel);
+        normShader.setMat4("rotation", planeRotation);
+        p1.draw(normShader);
+        normShader.setMat4("model", pieceModel);
+        normShader.setMat4("rotation", pieceRotation);
+        p2.draw(normShader);
+        normShader.setMat4("model", groundModel);
+        normShader.setMat4("rotation", groundRotation);
+        p3.draw(normShader);
+        normShader.setMat4("model", ballModel);
+        normShader.setMat4("rotation", ballRotation);
+        b.draw(normShader);
+
+        normShader.setMat4("model", boxModel);
+        normShader.setMat4("rotation", boxRotation);
+
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
+
+        //drawFrame(simpleDepthShader, lightCubeVAO, lightProjection, p1, p2);
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, normMap2);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        
+
+
+
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+        glCullFace(GL_FRONT);
         /*
 
         draw
@@ -647,7 +827,7 @@ int main()
         planeShader.setBool("useNormal", true);
         //plane
 
-
+        planeShader.setVec3("lightDirection", lightDirection);
         planeShader.setMat4("model", planeModel);
 
         planeShader.setMat4("lightSpaceMatrix2", lightSpaceMatrix2);
@@ -658,11 +838,35 @@ int main()
         planeShader.setMat4("allObj[2].model", groundModel);
         planeShader.setMat4("test.model", ballModel);
         //planeShader.setMat4("allObj[4].model", ballModel);
+        planeShader.setMat4("rotation", planeRotation);
         p1.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.4, 0.8, 0.4));
+
+        planeShader.setMat4("rotation", pieceRotation);
         planeShader.setMat4("model", pieceModel);
         p2.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.8, 0.4, 0.4));
+
+        planeShader.setMat4("rotation", groundRotation);
         planeShader.setMat4("model", groundModel);
         p3.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.4, 0.4, 0.8));
+
+      
+
+        //Box
+        planeShader.use();
+
+        planeShader.setBool("drawShadow", true);
+        planeShader.setVec3("material.diffuse", glm::vec3(0.8, 0.5, 0.3));
+        planeShader.setFloat("alpha", 1.0f);
+
+
+
+ 
+        planeShader.setMat4("allObj[3].model", boxModel);
+        planeShader.setMat4("modelObj", glm::mat4(0.0f));
+        planeShader.setMat4("model", boxModel);
+        planeShader.setMat4("rotation", boxRotation);
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         modelShader.use();
         modelShader.setInt("numObj", numObj);
@@ -678,25 +882,9 @@ int main()
         modelShader.setBool("isModel", false);
 
         //plane
-
+        modelShader.setMat4("rotation", ballRotation);
         modelShader.setMat4("model", ballModel);
         b.draw(modelShader, proj, view, lightPos2, cam);
-
-        //Box
-        planeShader.use();
-
-        planeShader.setBool("drawShadow", true);
-        planeShader.setVec3("material.diffuse", glm::vec3(0.8, 0.5, 0.3));
-        planeShader.setFloat("alpha", 1.0f);
-
-
-
- 
-        planeShader.setMat4("allObj[3].model", boxModel);
-        planeShader.setMat4("modelObj", glm::mat4(0.0f));
-        planeShader.setMat4("model", boxModel);
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 60);
 
         //light source
         lightCubeShader.use();
@@ -723,8 +911,8 @@ int main()
         shader.use();
         shader.setInt("texture1", show);
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.6f, 0.7f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.8));
+        //model = glm::translate(model, glm::vec3(-0.6f, 0.7f, 0.0f));
+        //model = glm::scale(model, glm::vec3(1.6));
         shader.setMat4("model", model);
         glBindVertexArray(VAO1);
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -782,18 +970,30 @@ void processInput(GLFWwindow* window)
         show = 4;
     if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
         show = 5;
+    if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+        show = 6;
+    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
+        show = 7;
+    if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
+        show = 8;
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+        show = 9;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (show <= 4) depthMode = show;
+    //if (show <= 4) depthMode = show;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        setBias += 0.0001;
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        angle += 0.005;
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        angle -= 0.005;
+        yy += 0.00005;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+        angle += 0.0005;
+    std::cout << angle << std::endl;
+}
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        angle -= 0.0005;
+        std::cout << angle << std::endl;
+    }
     //p1.move(0.01);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        setBias -= 0.0001;
+        yy -= 0.00005;
         //angle -= 0.01;
     //p1.move(-0.01);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -807,6 +1007,8 @@ void processInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cam.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        yy = -0.0;
 
 
 
@@ -914,26 +1116,26 @@ void initDepthMap(unsigned int& depthFBO, unsigned int& depthMap) {
     //glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SHADOW_WIDTH,
-        SHADOW_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH,
+        SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
         depthMap, 0);
     //glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
-    unsigned int rbo;
+    /*unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;*/
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -945,7 +1147,7 @@ void initPosMap(unsigned int& posFBO, unsigned int& posMap) {
     //glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
     glGenTextures(1, &posMap);
     glBindTexture(GL_TEXTURE_2D, posMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SHADOW_WIDTH,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, SHADOW_WIDTH,
         SHADOW_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -960,7 +1162,7 @@ void initPosMap(unsigned int& posFBO, unsigned int& posMap) {
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,SHADOW_WIDTH, SHADOW_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)

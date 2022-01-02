@@ -22,9 +22,9 @@ void main()
     //if (FragColor.y != -0.5)
 	
 	//else 
-	float rat = 5.0;
-    float offset = 0.05;
-    float plus = 1.5;
+	float rat = 1.0;
+    float offset = 0.001;
+    float plus = 0.0;
 	gl_FragDepth = gl_FragCoord.z;
 	FragColor = vec4(gl_FragCoord.z,0,0,1.0);
 	if (isSecond){

@@ -98,6 +98,12 @@
     <None Include="src\shader\model.fs">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="src\shader\normal.fs">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\shader\normal.vs">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\plane\Plane.h">
