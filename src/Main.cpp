@@ -74,7 +74,7 @@ const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 const float SIZE = 6;
 const int numObj = 3;
 glm::vec3 lightPos(1.0f, 1.6f, 1.0f);
-glm::vec3 lightPos2(1.5f, 0.1f, 0.5f);
+glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
 glm::vec3 lightLookAt = glm::vec3(0.0f,0.0,0.0);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -244,6 +244,9 @@ int main()
 
 
 
+
+
+
     glEnable(GL_DEPTH_TEST);
     // Shader pointShader("point.vs", "ourShader.fs");
     Shader planeShader("src/plane/plane.vs", "src/plane/plane.fs");
@@ -361,9 +364,12 @@ int main()
     modelShader.setInt("shadowMapNear", 1);
     modelShader.setInt("posMapFar", 5);
     modelShader.setInt("posMapNear", 4);
-
-    //star.init(rockShader, wall);
-
+    modelShader.setInt("posMapSec", 9);
+    modelShader.setInt("normMap", 6);
+    modelShader.setInt("normMapBack", 7);
+    modelShader.setInt("normMapFar", 8);
+    modelShader.setInt("texture_diffuse1", 10);
+  
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -479,25 +485,25 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
 
-        ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, 0.0, -0.0));
+        ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, -0.05+angle,-0.03));
         ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
 
-        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.10+yy, 0.0, -0.3));
+        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.00+yy, 0.0, -0.3));
         planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 4.0f));
         planeRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
 
         boxModel = glm::mat4(1.0f);
-        boxModel = glm::translate(boxModel, glm::vec3(-0.3, -0.05, angle));
+        boxModel = glm::translate(boxModel, glm::vec3(0.0, -0.05, angle));
         boxModel = glm::rotate(boxModel, glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.4f)); // a smaller cube
         boxRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60+angle, yy, -0.9));
+        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60, yy, -0.9));
         pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.002f, 0.5f));
         pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
@@ -585,7 +591,8 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
      
-
+        simplePosShader.setBool("isSecond", false);
+        simplePosShader.setInt("posMapNear", 4);
 
         simplePosShader.setMat4("model", planeModel);
         p1.draw(simplePosShader);
@@ -595,6 +602,8 @@ int main()
         p3.draw(simplePosShader);
         simplePosShader.setMat4("model", ballModel);
         b.draw(simplePosShader);
+        simplePosShader.setMat4("model", boxModel);
+        glBindVertexArray(lightCubeVAO);
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, posMap2);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -879,8 +888,8 @@ int main()
         modelShader.setMat4("allObj[2].model", groundModel);
         modelShader.setMat4("allObj[3].model", boxModel);
         modelShader.setMat4("test.model", ballModel);
-        modelShader.setBool("isModel", false);
-
+        modelShader.setBool("isModel",false);
+        modelShader.setVec3("lightDirection", lightDirection);
         //plane
         modelShader.setMat4("rotation", ballRotation);
         modelShader.setMat4("model", ballModel);
@@ -981,11 +990,13 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     //if (show <= 4) depthMode = show;
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         yy += 0.00005;
+        std::cout << yy << std::endl;
+    }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
         angle += 0.0005;
-    std::cout << angle << std::endl;
+    
 }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         angle -= 0.0005;

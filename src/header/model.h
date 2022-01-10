@@ -69,7 +69,35 @@ public:
             std::cout << "Failed to load texture" << std::endl;
         }
         shader.use();
-        shader.setInt("texture_diffuse1", 8);
+        shader.setInt("texture_diffuse1", 10);
+        stbi_image_free(data);
+
+        unsigned int normal;
+        glGenTextures(1, &normal);
+        glActiveTexture(GL_TEXTURE11);
+        glBindTexture(GL_TEXTURE_2D, normal);
+        // set the texture wrapping/filtering options (on currently bound texture)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // load and generate the texture
+
+        
+        data = stbi_load("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\res\\normal.png", &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            std::cout << "success" << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+        shader.use();
+        shader.setInt("texture_normal1", 11);
         stbi_image_free(data);
     }
     void Draw(Shader& shader)

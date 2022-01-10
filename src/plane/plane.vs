@@ -10,6 +10,8 @@ out VS_OUT {
     vec4 FragPosLightSpace;
     vec4 FragPosLightSpace2;
     vec4 Norm;
+    mat4 lightSpaceMatrix;
+
 
 } vs_out;
 
@@ -28,4 +30,5 @@ void main()
     gl_Position = projection * view * model * vec4(aPos, 1.0);
    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
     vs_out.FragPosLightSpace2 = lightSpaceMatrix2 * vec4(vs_out.FragPos, 1.0);
+    vs_out.lightSpaceMatrix = lightSpaceMatrix2;
 }
