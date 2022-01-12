@@ -44,7 +44,7 @@ public:
 	std::vector<float> sphereVertices;
 	std::vector<int> sphereIndices;
 	
-	Model ourModel = Model("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\Res\\rock.obj");
+	Model ourModel = Model("C:\\Users\\LEGION\\source\\repos\\ShadowPlayground\\Res\\backpack.obj");
 
 	void init(Shader shader) {
 		

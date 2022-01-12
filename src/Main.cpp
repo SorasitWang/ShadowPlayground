@@ -52,6 +52,7 @@ using namespace gl;
 #include "../Ball.h"
 #include "./sphere/Sphere.h"
 #include <string>
+#include "./header/timer.h"
 //#include "../Character.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -71,7 +72,7 @@ unsigned int loadTexture(const char* path);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-const float SIZE = 6;
+
 const int numObj = 3;
 glm::vec3 lightPos(1.0f, 1.6f, 1.0f);
 glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
@@ -88,6 +89,7 @@ Camera cam = Camera();
 Plane p1 = Plane();
 Plane p2 = Plane();
 Plane p3 = Plane();
+
 
 float angle = 0.0;
 int depthMode = 1;
@@ -406,11 +408,11 @@ int main()
     pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
 
     glm::mat4 groundModel(1.0f);
-    groundModel = glm::translate(groundModel, glm::vec3(-0.096, -0.735, -0.3));
+    groundModel = glm::translate(groundModel, glm::vec3(-1.096, -0.735, -0.3));
     groundModel = glm::scale(groundModel, glm::vec3(2.0f, 1.0f, 4.0));
     groundRotation = glm::rotate(glm::mat4(1.0f), glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
     groundModel = glm::rotate(groundModel, glm::radians(00.0f), glm::vec3(0.0, 0.0, -1.0));
-
+    //groundModel = glm::rotate(groundModel, glm::radians(20.0f), glm::vec3(0.0, 0.0, -1.0));
     //pieceModel = glm::rotate(pieceModel, glm::radians(50.0f), glm::vec3(1.0, 1.0, 0.0));
     glm::mat4 ballModel(1.0f);
     ballModel = glm::translate(ballModel, glm::vec3(0.3, 0.0, 0.0));
@@ -460,11 +462,35 @@ int main()
     /*for (int i = 0; i < showV.size(); i += 3) {
        std::cout << showV[i] << " " << showV[i+1] << " " << showV[i+2] << " " << std::endl;
     }*/
+    lightView = glm::lookAt(lightPos2, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
+    lightSpaceMatrix2 = lightProjection * lightView;
+    glm::vec3 lightDirection = glm::vec3(lightLookAt - lightPos2);
+
+    glm::vec4 coordSpace = lightSpaceMatrix2 * glm::vec4(1.0,0.0,0.0, 1.0);
+    glm::vec3 newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
+    std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
+
+    coordSpace = lightSpaceMatrix2 * glm::vec4(0.0, 1.0, 1.0, 1.0);
+    newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
+    std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
+
+    coordSpace = lightSpaceMatrix2 * glm::vec4(1.0, 1.0, 1.0, 1.0);
+    newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
+    std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
+    int nbFrames = 0;
+    double lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        nbFrames++;
+        if (currentFrame - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
+         // printf and reset timer
+            std::cout <<  double(nbFrames) << std::endl;
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
 
         // input
         // -----
@@ -478,6 +504,9 @@ int main()
 
         float boxX = 0.345;
 
+ 
+
+        // Call this to get the frames/sec
 
         ///////
 
@@ -487,6 +516,7 @@ int main()
 
         ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, -0.05+angle,-0.03));
         ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        //ballModel = glm::rotate(ballModel, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
@@ -494,8 +524,9 @@ int main()
         planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.00+yy, 0.0, -0.3));
         planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 4.0f));
         planeRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
+       
         planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-
+       
 
         boxModel = glm::mat4(1.0f);
         boxModel = glm::translate(boxModel, glm::vec3(0.0, -0.05, angle));
@@ -508,9 +539,7 @@ int main()
         pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         
-        lightView = glm::lookAt(lightPos2, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
-        lightSpaceMatrix2 = lightProjection * lightView;
-        glm::vec3 lightDirection = glm::vec3(lightLookAt - lightPos2);
+       
         
 
         //--------------------- pos ---------------------------------------------//
@@ -888,7 +917,7 @@ int main()
         modelShader.setMat4("allObj[2].model", groundModel);
         modelShader.setMat4("allObj[3].model", boxModel);
         modelShader.setMat4("test.model", ballModel);
-        modelShader.setBool("isModel",false);
+        modelShader.setBool("isModel",true);
         modelShader.setVec3("lightDirection", lightDirection);
         //plane
         modelShader.setMat4("rotation", ballRotation);
