@@ -81,6 +81,7 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 float x, y,yy=-0.16;
+int di = 0;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
@@ -470,7 +471,7 @@ int main()
     glm::vec3 newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
     std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
 
-    coordSpace = lightSpaceMatrix2 * glm::vec4(0.0, 1.0, 1.0, 1.0);
+    coordSpace = lightSpaceMatrix2 * glm::vec4(0.0, 1.0, 0.0, 1.0);
     newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
     std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
 
@@ -516,8 +517,9 @@ int main()
 
         ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, -0.05+angle,-0.03));
         ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //ballModel = glm::rotate(ballModel, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ballModel = glm::rotate(ballModel, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ballRotation = glm::rotate(ballRotation, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
 
@@ -534,7 +536,7 @@ int main()
         boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.4f)); // a smaller cube
         boxRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60, yy, -0.9));
+        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60, -0.300+yy, -0.9));
         pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.002f, 0.5f));
         pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
@@ -860,6 +862,7 @@ int main()
         planeShader.use();
         //planeShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
         planeShader.setInt("numObj", numObj);
+        planeShader.setInt("di", di);
         planeShader.setInt("depthMode", show);
         planeShader.setFloat("setBias", setBias);
         planeShader.setBool("useNormal", true);
@@ -907,6 +910,7 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
         modelShader.use();
+        modelShader.setInt("di", di);
         modelShader.setInt("numObj", numObj);
         modelShader.setInt("depthMode", show);
         modelShader.setFloat("setBias", setBias);
@@ -1049,6 +1053,26 @@ void processInput(GLFWwindow* window)
         cam.ProcessKeyboard(RIGHT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         yy = -0.0;
+
+
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+        di = 0;
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        di = 1;
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+        di = 2;
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+        di = 6;
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        di = 8;
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+        di = 7;
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+        di = 5;
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
+        di = 3;
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+        di = 4;
 
 
 
