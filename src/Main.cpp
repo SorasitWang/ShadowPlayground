@@ -67,7 +67,7 @@ void renderDepth(unsigned int depthFBO, unsigned int depthMap, Shader& depthShad
 void initPosMap(unsigned int& posFBO, unsigned int& posMap);
 void initDepthMap(unsigned int& depthFBO, unsigned int& depthMap);
 void drawFrame(Shader& shader, unsigned& VAO, glm::mat4 lightProjection, Plane p1, Plane p2);
-void addVertices(Shader& shader,Ball b);
+void addVertices(Shader& shader, Ball b);
 unsigned int loadTexture(const char* path);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -76,11 +76,11 @@ const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 const int numObj = 3;
 glm::vec3 lightPos(1.0f, 1.6f, 1.0f);
 glm::vec3 lightPos2(1.5f, 0.1f, 0.0f);
-glm::vec3 lightLookAt = glm::vec3(0.0f,0.0,0.0);
+glm::vec3 lightLookAt = glm::vec3(0.0f, 0.0, 0.0);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-float x, y,yy=-0.16;
+float x, y, yy = -0.16;
 int di = 0;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -97,7 +97,7 @@ int depthMode = 1;
 float setBias = 0.0f;
 unsigned int show = 1;
 
-float vertices[360]= {
+float vertices[360] = {
     // back face
 -0.3f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-left
   0.5f, -0.5f, -0.5f,  0.0f, 0.0f,-1.0f, // bottom-right    
@@ -161,27 +161,27 @@ float vertices[360]= {
   0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right 
   0.5f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, // top-right
   -0.3f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,// top-left
-  
-      
+
+
   -0.3f,  -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,  // top-left   
   -0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-left  
   0.5f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right
- 
- 
+
+
   0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right  
   0.3f,  -0.5f, -0.0f,  0.0f, -1.0f, 0.0f, // top-right
-  -1.5f, - 0.5f, -0.0f,  0.0f, -1.0f, 0.0f,// top-left
+  -1.5f, -0.5f, -0.0f,  0.0f, -1.0f, 0.0f,// top-left
 
 
   -1.5f, -0.5f, -0.0f,  0.0f, -1.0f, 0.0f,  // top-left   
   -1.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-left  
    0.3f,  -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, // bottom-right
-   
-  
-  
-  
- 
- 
+
+
+
+
+
+
 };;
 
 
@@ -296,7 +296,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
- 
+
 
     // first, configure the cube's VAO (and VBO)
 
@@ -372,7 +372,7 @@ int main()
     modelShader.setInt("normMapBack", 7);
     modelShader.setInt("normMapFar", 8);
     modelShader.setInt("texture_diffuse1", 10);
-  
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -423,29 +423,29 @@ int main()
 
     glm::mat4 boxModel = glm::mat4(1.0f);
     boxRotation = glm::mat4(1.0f);
-    
 
 
-   // addVertices(planeShader,b);
-    //addVertices(modelShader, b);
-    //planeShader.setInt("allObj[4].num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
-    /*planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
-    int idx = 0,c=0;
-    for (int i = 0; i < b.X_SEGMENTS * b.Y_SEGMENTS; i+=1) {
-        for (int j = 0; j < 6; j++) {
-            idx = 3 * b.sphereIndices[6*i + j];
-            //planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"),
-                //glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
-            planeShader.setVec3(std::string("test.vertex[") + std::to_string(c) + std::string("]"),
-                glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
-            c += 1;
-        }
 
-    }*/
-  
+    // addVertices(planeShader,b);
+     //addVertices(modelShader, b);
+     //planeShader.setInt("allObj[4].num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
+     /*planeShader.setInt("test.num", b.X_SEGMENTS* b.Y_SEGMENTS * 6);
+     int idx = 0,c=0;
+     for (int i = 0; i < b.X_SEGMENTS * b.Y_SEGMENTS; i+=1) {
+         for (int j = 0; j < 6; j++) {
+             idx = 3 * b.sphereIndices[6*i + j];
+             //planeShader.setVec3(std::string("allObj[4].vertex[") + std::to_string(i / 6) + std::string("]"),
+                 //glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
+             planeShader.setVec3(std::string("test.vertex[") + std::to_string(c) + std::string("]"),
+                 glm::vec3(b.sphereVertices[idx], b.sphereVertices[idx + 1], b.sphereVertices[idx + 2]));
+             c += 1;
+         }
 
-   
-    //sboxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
+     }*/
+
+
+
+     //sboxModel = glm::rotate(boxModel, glm::radians(angle), glm::vec3(0.0, 0.0, -1.0));
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -457,9 +457,9 @@ int main()
 
     modelShader.use();
     modelShader.setBool("isModel", true);
-    
+
     const char* showMode[] = { "Normal use bias" , "Back face" ,"Middepth front-back face" , "Middepth 1st-2nd front face" , "Position front" , "Positon back" };
-   
+
     /*for (int i = 0; i < showV.size(); i += 3) {
        std::cout << showV[i] << " " << showV[i+1] << " " << showV[i+2] << " " << std::endl;
     }*/
@@ -467,7 +467,7 @@ int main()
     lightSpaceMatrix2 = lightProjection * lightView;
     glm::vec3 lightDirection = glm::vec3(lightLookAt - lightPos2);
 
-    glm::vec4 coordSpace = lightSpaceMatrix2 * glm::vec4(1.0,0.0,0.0, 1.0);
+    glm::vec4 coordSpace = lightSpaceMatrix2 * glm::vec4(1.0, 0.0, 0.0, 1.0);
     glm::vec3 newProjCoord = glm::vec3(coordSpace.x, coordSpace.y, coordSpace.z) / coordSpace.w;
     std::cout << newProjCoord.x << " " << newProjCoord.y << " " << newProjCoord.z << std::endl;
 
@@ -488,7 +488,7 @@ int main()
         nbFrames++;
         if (currentFrame - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
          // printf and reset timer
-            std::cout <<  double(nbFrames) << std::endl;
+            std::cout << double(nbFrames) << std::endl;
             nbFrames = 0;
             lastTime += 1.0;
         }
@@ -505,7 +505,7 @@ int main()
 
         float boxX = 0.345;
 
- 
+
 
         // Call this to get the frames/sec
 
@@ -515,7 +515,7 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
 
-        ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3+90*yy, -0.05+angle,-0.03));
+        ballModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.3 + 90 * yy, -0.05 + angle, -0.03));
         ballModel = glm::rotate(ballModel, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ballModel = glm::rotate(ballModel, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ballRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -523,12 +523,12 @@ int main()
         ballModel = glm::scale(ballModel, glm::vec3(0.07, 0.07, 0.07));
 
 
-        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.00+yy, 0.0, -0.3));
+        planeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-1.00 + yy, 0.0, -0.3));
         planeModel = glm::scale(planeModel, glm::vec3(0.01f, 2.0f, 4.0f));
         planeRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-       
+
         planeModel = glm::rotate(planeModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-       
+
 
         boxModel = glm::mat4(1.0f);
         boxModel = glm::translate(boxModel, glm::vec3(0.0, -0.05, angle));
@@ -536,13 +536,13 @@ int main()
         boxModel = glm::scale(boxModel, glm::vec3(0.4f, 0.4f, 0.4f)); // a smaller cube
         boxRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60, -0.300+yy, -0.9));
+        pieceModel = glm::translate(glm::mat4(1.0f), glm::vec3(-0.60, -0.300 + yy, -0.9));
         pieceModel = glm::scale(pieceModel, glm::vec3(0.5f, 0.002f, 0.5f));
         pieceModel = glm::rotate(pieceModel, glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
         pieceRotation = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0, 0.0, -1.0));
-        
-       
-        
+
+
+
 
         //--------------------- pos ---------------------------------------------//
         glEnable(GL_CULL_FACE);
@@ -552,7 +552,7 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         simplePosShader.use();
         simplePosShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
-       
+
 
         simplePosShader.setMat4("model", planeModel);
         simplePosShader.setBool("isSecond", false);
@@ -568,7 +568,7 @@ int main()
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
-        
+
         //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glBindVertexArray(lightCubeVAO);
         //glDrawArrays(GL_TRIANGLES, 0, 60);
@@ -621,7 +621,7 @@ int main()
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
-     
+
         simplePosShader.setBool("isSecond", false);
         simplePosShader.setInt("posMapNear", 4);
 
@@ -663,7 +663,7 @@ int main()
         b.draw(simpleDepthShader);
 
 
-     
+
         simpleDepthShader.setMat4("model", boxModel);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 60);
@@ -684,7 +684,7 @@ int main()
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
-      
+
 
         simpleDepthShader.setMat4("model", planeModel);
         p1.draw(simpleDepthShader);
@@ -730,7 +730,7 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-        
+
 
 
 
@@ -741,12 +741,12 @@ int main()
         glCullFace(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-        
+
         normShader.use();
         normShader.setInt("posMapNear", 4);
         normShader.setMat4("lightSpaceMatrix", lightSpaceMatrix2);
         normShader.setBool("isSecond", false);
-        
+
         normShader.setMat4("model", planeModel);
         normShader.setMat4("rotation", planeRotation);
         p1.draw(normShader);
@@ -762,7 +762,7 @@ int main()
 
         normShader.setMat4("model", boxModel);
         normShader.setMat4("rotation", boxRotation);
-        
+
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 60);
 
@@ -836,7 +836,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, normMap2);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        
+
 
 
 
@@ -890,7 +890,7 @@ int main()
         planeShader.setMat4("model", groundModel);
         p3.draw(planeShader, proj, view, lightPos2, cam, glm::vec3(0.4, 0.4, 0.8));
 
-      
+
 
         //Box
         planeShader.use();
@@ -901,7 +901,7 @@ int main()
 
 
 
- 
+
         planeShader.setMat4("allObj[3].model", boxModel);
         planeShader.setMat4("modelObj", glm::mat4(0.0f));
         planeShader.setMat4("model", boxModel);
@@ -921,7 +921,7 @@ int main()
         modelShader.setMat4("allObj[2].model", groundModel);
         modelShader.setMat4("allObj[3].model", boxModel);
         modelShader.setMat4("test.model", ballModel);
-        modelShader.setBool("isModel",true);
+        modelShader.setBool("isModel", true);
         modelShader.setVec3("lightDirection", lightDirection);
         //plane
         modelShader.setMat4("rotation", ballRotation);
@@ -1027,10 +1027,10 @@ void processInput(GLFWwindow* window)
         yy += 0.00005;
         std::cout << yy << std::endl;
     }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
         angle += 0.0005;
-    
-}
+
+    }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         angle -= 0.0005;
         std::cout << angle << std::endl;
@@ -1038,8 +1038,8 @@ void processInput(GLFWwindow* window)
     //p1.move(0.01);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         yy -= 0.00005;
-        //angle -= 0.01;
-    //p1.move(-0.01);
+    //angle -= 0.01;
+//p1.move(-0.01);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cam.ProcessKeyboard(FORWARD, deltaTime);
 
@@ -1226,7 +1226,7 @@ void initPosMap(unsigned int& posFBO, unsigned int& posMap) {
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,SHADOW_WIDTH, SHADOW_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SHADOW_WIDTH, SHADOW_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -1274,7 +1274,7 @@ void drawFrame(Shader& shader, unsigned& VAO, glm::mat4 lightProjection, Plane p
 
 }
 
-void addVertices(Shader& shader,Ball b) {
+void addVertices(Shader& shader, Ball b) {
 
     shader.use();
     //p1 + p2
@@ -1299,7 +1299,7 @@ void addVertices(Shader& shader,Ball b) {
     }
 
     auto modelV = b.getAllVertices();
-    std::cout <<"modelV" << modelV.size() << std::endl;
+    std::cout << "modelV" << modelV.size() << std::endl;
     shader.setInt("test.num", modelV.size() / 3);
 
     for (int i = 0; i < modelV.size(); i += 3) {

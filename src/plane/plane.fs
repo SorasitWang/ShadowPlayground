@@ -211,6 +211,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
      float rat = 10.0;
     float offset = 0.01;
     float plus = 1.5;
+    bool f = false;
     float w = 1.0;
     float currentDepth = projCoords.z;
     if (depthMode == 1){ //normal
@@ -241,6 +242,8 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
     //max(mapFar.r,mapBack.r )
       bias = min(abs(1.0*mapNear.r - 1.0*min(mapBack.r,mapFar.r) )/2.0,0.005);
         closestDepth =mapNear.r;
+        if (currentDepth - bias >= closestDepth)
+        f = true;
     }
     if (depthMode == 66){
 
@@ -377,14 +380,14 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
         //}
 
     }
-    if (depthMode >= 5){ //normal
+    if (depthMode == 6){ //normal
 
 
         vec3 norm = normalize(fs_in.Norm.xyz);
         vec3 lightDir = normalize(-lightDirection);// normalize(-posBack.xyz + posNear.xyz); //obj to sun
         if (dot(norm, lightDir)<=-0.001) return 1.0;
 
-        vec3 mainNorm = norm;//fs_in.Norm.xyz;
+        vec3 mainNorm = norm;
         vec3 newFront = fs_in.FragPos.xyz + dot(posNear.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
         vec3 newBack = fs_in.FragPos.xyz + dot(posBack.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
         vec3 tmp = posNear.xyz - lightDir*min(0.005,abs(mapNear.r-mapFar.r)/2.0);
@@ -392,11 +395,10 @@ float ShadowCalculation(vec4 fragPosLightSpace,sampler2D mapShadowFar,sampler2D 
         // dot(posSec.xyz- fs_in.FragPos.xyz,mainNorm)
         vec3 newTmp = (mapBack.r < mapFar.r)? newBack:newSec;
        
-   
-        if (mapNear.r < currentDepth){
+        if (!f) return .0;
+        if (f){
             //if (depthMode==5){
-                if ( ( (sign(mainNorm) == sign(newSec-fs_in.FragPos.xyz) ))
-                && sign(mainNorm) == sign(newFront-fs_in.FragPos.xyz) )
+                if ( sign(mainNorm) == sign(newSec-fs_in.FragPos.xyz) )
                     return 1.0;
                //return 0.0;
                // }
@@ -751,12 +753,12 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
         vec3 newBack = fs_in.FragPos.xyz + dot(posFar.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
         vec3 newSec = fs_in.FragPos.xyz + dot(posSec.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
     
- vec2 c = projCoords.xy + direction*texelSize;
-                   vec3 anchor= texture(posMapNear , c).xyz;
+ vec2 c = projCoords.xy ;//+ direction*texelSize;
+                   //vec3 anchor= texture(posMapNear , c).xyz;
                     //posNear Back and Far will calculate by project itself to new line (lightRay)
-                   posNear.xyz = dot((posNear.xyz - anchor),lightDir)*lightDir + anchor;
-                    posFar.xyz = dot((posFar.xyz - anchor),lightDir)*lightDir + anchor;
-                   posSec.xyz = dot((posSec.xyz - anchor),lightDir)*lightDir + anchor;
+                  // posNear.xyz = dot((posNear.xyz - anchor),lightDir)*lightDir + anchor;
+                   // posFar.xyz = dot((posFar.xyz - anchor),lightDir)*lightDir + anchor;
+                  // posSec.xyz = dot((posSec.xyz - anchor),lightDir)*lightDir + anchor;
                     //posNear.y += 1.0;//texture(posMapNear,c);
                     //posBack.y += 1.0;//texture(posMapFar,c);
                     //posSec.y += 1.0;//texture(posMapSec,c);
@@ -768,7 +770,7 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
            
                         newFront = fs_in.FragPos.xyz + dot(posNear.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
                         newBack = fs_in.FragPos.xyz + dot(posFar.xyz - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
-                        vec3 tmp = posSec.xyz + lightDir*abs(mapNear.r-mapFar.r)/2.0;
+                        vec3 tmp = posNear.xyz - lightDir*min(0.005,abs(mapNear.r-mapFar.r)/2.0);
                         newSec = fs_in.FragPos.xyz +  dot(tmp - fs_in.FragPos.xyz,mainNorm) / dot(mainNorm,mainNorm) * (mainNorm);
                         vec3 newTmp = (mapBack.r < mapFar.r)? newBack:newSec;
     vec3 result;
@@ -785,9 +787,9 @@ vec3 calculate(Properties light,vec3 Normal, vec3 viewPos,vec3 FragPos,vec4 frag
         // result = (1.0-shadow*0.5)*normalize(vec3(abs(normBack.x),abs(normBack.y),abs(normBack.z)));
          //result = (1.0-shadow*0.5)*normalize(vec3(abs(normFront.x),abs(normFront.y),abs(normFront.z)));
        // result = (1.0-shadow/2.0)*vec3(abs(n3.x),abs(n3.y),abs(n3.z));
-     // if ( (sign(mainNorm) == sign(newFront-fs_in.FragPos.xyz)) && (sign(mainNorm) == sign(newTmp-fs_in.FragPos.xyz) ) )
-       //     return vec3(1,1,1);
-       //result = sign(posSec.xyz - fs_in.FragPos.xyz) ;
+     //if ( (sign(newSec-fs_in.FragPos.xyz) == sign(newFront-fs_in.FragPos.xyz)) && (sign(mainNorm) == sign(newSec-fs_in.FragPos.xyz) ) )
+        //    return vec3(1,1,1);
+      // result = (1.0-shadow)*sign(newSec.xyz - fs_in.FragPos.xyz) ;
     if (isModel) result = (1.0-shadow)*texture(texture_diffuse1,fs_in.TexCoords).xyz;
 
 
